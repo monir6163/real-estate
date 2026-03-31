@@ -11,6 +11,19 @@ interface CheckoutSessionResponse {
   };
 }
 
+interface PaymentSettings {
+  id: string;
+  bookingFeeAmount: number;
+  premiumListingFeeAmount: number;
+  currency: string;
+}
+
+interface PaymentSettingsResponse {
+  success: boolean;
+  message: string;
+  data: PaymentSettings;
+}
+
 interface PaymentResponse {
   id: string;
   bookingId?: string;
@@ -99,6 +112,43 @@ export const getMyPayments = async () => {
     return {
       success: false,
       data: [],
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+// Get payment settings (booking fee, etc)
+export const getPaymentSettings = async () => {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+    const cookieStore = await cookies();
+
+    const response = await fetch(`${BACKEND_URL}/api/v1/payments/settings`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieStore.toString(),
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch payment settings");
+    }
+
+    const data: PaymentSettingsResponse = await response.json();
+    return {
+      success: true,
+      data: data.data,
+    };
+  } catch (error) {
+    console.error("Error fetching payment settings:", error);
+    return {
+      success: false,
+      data: null,
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }

@@ -1,5 +1,6 @@
 "use client";
 
+import { updateUserProfile } from "@/actions/users";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -37,21 +38,9 @@ export default function ProfileForm({ user }: ProfileFormProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/users/profile/update", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const result = await updateUserProfile(formData);
 
-      if (!response.ok) {
-        throw new Error("Failed to update profile");
-      }
-
-      const result = await response.json();
-
-      if (result.success) {
+      if (result.status) {
         toast.success(result.message || "Profile updated successfully");
         setIsEditing(false);
         // Refresh the page to show updated data

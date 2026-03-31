@@ -1,6 +1,6 @@
 "use client";
 import { createBooking } from "@/actions/bookings";
-import { createBookingCheckout } from "@/actions/payments";
+import { createBookingCheckout, getPaymentSettings } from "@/actions/payments";
 import { getCurrentUser } from "@/actions/users";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar, MessageSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface BookPropertyModalProps {
   propertyId: string;
@@ -36,6 +36,31 @@ const BookPropertyModal = ({
   const [visitDate, setVisitDate] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [bookingFeeAmount, setBookingFeeAmount] = useState<number>(49.99); // Default fallback
+  const [feesLoading, setFeesLoading] = useState(true);
+
+  // Fetch payment settings on component mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const result = await getPaymentSettings();
+        if (result.success && result.data) {
+          // Convert from cents to dollars if needed
+          const feeInDollars = result.data.bookingFeeAmount / 100;
+          setBookingFeeAmount(feeInDollars);
+        }
+      } catch (err) {
+        console.error("Failed to fetch booking fee:", err);
+        // Keep default fallback of 49.99
+      } finally {
+        setFeesLoading(false);
+      }
+    };
+
+    if (open) {
+      fetchSettings();
+    }
+  }, [open]);
 
   const handleBooking = async () => {
     const { data } = await getCurrentUser();
@@ -170,7 +195,9 @@ const BookPropertyModal = ({
                 Booking Fee
               </p>
               <p className="text-blue-800 dark:text-blue-200">
-                A booking fee of $49.99 will be charged for this reservation.
+                {feesLoading
+                  ? "Loading fee information..."
+                  : `A booking fee of $${bookingFeeAmount.toFixed(2)} will be charged for this reservation.`}
               </p>
             </div>
           </div>

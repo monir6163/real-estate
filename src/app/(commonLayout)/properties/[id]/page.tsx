@@ -1,5 +1,6 @@
 "use client";
 
+import { getPaymentSettings } from "@/actions/payments";
 import { getPropertyById } from "@/actions/properties";
 import BookPropertyModal from "@/components/BookPropertyModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -72,6 +73,25 @@ export default function PropertyDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [bookingFeeAmount, setBookingFeeAmount] = useState<number>(49.99); // Default fallback
+
+  useEffect(() => {
+    const fetchPaymentSettings = async () => {
+      try {
+        const result = await getPaymentSettings();
+        if (result.success && result.data) {
+          // Convert from cents to dollars if needed
+          const feeInDollars = result.data.bookingFeeAmount / 100;
+          setBookingFeeAmount(feeInDollars);
+        }
+      } catch (err) {
+        console.error("Failed to fetch booking fee:", err);
+        // Keep default fallback of 49.99
+      }
+    };
+
+    fetchPaymentSettings();
+  }, []);
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -387,7 +407,7 @@ export default function PropertyDetailPage() {
                 agentId={property.agent?.id || ""}
               />
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-3 text-center">
-                Booking fee: $49.99
+                Booking fee: ${bookingFeeAmount.toFixed(2)}
               </p>
             </Card>
 

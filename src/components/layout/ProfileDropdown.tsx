@@ -31,7 +31,11 @@ export function ProfileDropdown({ user }: { user: any }) {
     ],
     customer: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
-      { href: "/dashboard/orders", label: "My Orders", icon: ShoppingBagIcon },
+      {
+        href: "/dashboard/bookings",
+        label: "My Bookings",
+        icon: ShoppingBagIcon,
+      },
     ],
   };
 
