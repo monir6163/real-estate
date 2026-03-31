@@ -89,9 +89,9 @@ const PropertyCard = ({ property, layout = "grid" }: PropertyCardProps) => {
   return (
     <Link
       href={`/properties/${property.id}`}
-      className="group bg-card rounded-xl border border-border overflow-hidden hover:shadow-lg transition-all duration-300"
+      className="group bg-card rounded-xl border border-border overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col"
     >
-      <div className="relative overflow-hidden aspect-4/3">
+      <div className="relative overflow-hidden aspect-[4/3] w-full bg-muted">
         <img
           src={property.image}
           alt={property.title}
@@ -118,15 +118,15 @@ const PropertyCard = ({ property, layout = "grid" }: PropertyCardProps) => {
           <Heart className={`w-4 h-4 ${saved ? "fill-current" : ""}`} />
         </button>
       </div>
-      <div className="p-4">
+      <div className="p-4 flex flex-col flex-1">
         <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-1">
           <MapPin className="w-3.5 h-3.5" />
           {property.location}
         </div>
-        <h3 className="font-display font-semibold text-foreground group-hover:text-primary transition-colors mb-3">
+        <h3 className="font-display font-semibold text-foreground group-hover:text-primary transition-colors mb-3 line-clamp-2">
           {property.title}
         </h3>
-        <div className="flex items-center gap-3 text-muted-foreground text-xs mb-3">
+        <div className="flex items-center gap-3 text-muted-foreground text-xs mb-3 flex-wrap">
           {property.beds > 0 && (
             <span className="flex items-center gap-1">
               <BedDouble className="w-3.5 h-3.5" /> {property.beds} Beds
@@ -142,7 +142,7 @@ const PropertyCard = ({ property, layout = "grid" }: PropertyCardProps) => {
             {property.sqft.toLocaleString()}
           </span>
         </div>
-        <div className="pt-3 border-t border-border">
+        <div className="pt-3 border-t border-border mt-auto">
           <p className="font-display font-bold text-lg text-primary">
             {formatPrice(property.price, property.status)}
           </p>

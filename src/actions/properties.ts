@@ -155,3 +155,66 @@ export const getPropertyById = async (id: string) => {
     };
   }
 };
+
+export const getFeaturedProperties = async (filters?: PropertiesFilter) => {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+
+    const params = new URLSearchParams();
+    if (filters?.page) params.append("page", filters.page.toString());
+    if (filters?.limit) params.append("limit", filters.limit.toString());
+    if (filters?.search) params.append("searchTerm", filters.search);
+    if (filters?.sortBy) params.append("sortBy", filters.sortBy);
+    if (filters?.sortOrder) params.append("sortOrder", filters.sortOrder);
+    if (filters?.minPrice)
+      params.append("price[gte]", filters.minPrice.toString());
+    if (filters?.maxPrice)
+      params.append("price[lte]", filters.maxPrice.toString());
+    if (filters?.bedrooms)
+      params.append("bedrooms", filters.bedrooms.toString());
+    if (filters?.bathrooms)
+      params.append("bathrooms", filters.bathrooms.toString());
+    if (filters?.location) params.append("location", filters.location);
+
+    const url = `${BACKEND_URL}/api/v1/properties/featured${
+      params.toString() ? "?" + params.toString() : ""
+    }`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch featured properties: ${response.status}`,
+      );
+    }
+
+    const data: PropertiesApiResponse = await response.json();
+    return {
+      success: true,
+      data: data.data,
+      meta: data.meta,
+    };
+  } catch (error) {
+    console.error("Error fetching featured properties:", error);
+    return {
+      success: false,
+      data: [],
+      meta: {
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 0,
+      },
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
