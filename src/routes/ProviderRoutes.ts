@@ -25,9 +25,9 @@ export const ProviderRoutes: Route[] = [
         icon: "Calendar",
       },
       {
-        title: "My Reviews",
-        url: "/agent-dashboard/my-reviews",
-        icon: "Star",
+        title: "Payment Settings",
+        url: "/agent-dashboard/payment-settings",
+        icon: "CreditCard",
       },
     ],
   },

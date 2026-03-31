@@ -371,7 +371,8 @@ export default function PropertyDetailPage() {
                 agentId={property.agent?.id || ""}
               />
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-3 text-center">
-                Booking fee: $49.99
+                Booking fee: ${bookingFeeAmount.toFixed(2)} (applied at
+                checkout)
               </p>
             </Card>
 

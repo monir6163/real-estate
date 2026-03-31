@@ -153,3 +153,51 @@ export const getPaymentSettings = async () => {
     };
   }
 };
+
+// Update payment settings
+export const updatePaymentSettings = async (
+  bookingFeeAmount: number,
+  premiumListingFeeAmount: number,
+  currency: string,
+) => {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+    const cookieStore = await cookies();
+
+    const response = await fetch(`${BACKEND_URL}/api/v1/payments/settings`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieStore.toString(),
+      },
+      body: JSON.stringify({
+        bookingFeeAmount,
+        premiumListingFeeAmount,
+        currency,
+      }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Failed to update payment settings");
+    }
+
+    const data: PaymentSettingsResponse = await response.json();
+    return {
+      success: true,
+      data: data.data,
+      message: "Payment settings updated successfully",
+    };
+  } catch (error) {
+    console.error("Error updating payment settings:", error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
