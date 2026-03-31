@@ -1,5 +1,7 @@
 "use server";
 
+import { cookies } from "next/headers";
+
 interface PropertiesFilter {
   page?: number;
   limit?: number;
@@ -214,6 +216,43 @@ export const getFeaturedProperties = async (filters?: PropertiesFilter) => {
         limit: 10,
         totalPages: 0,
       },
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+export const ownerGetProperties = async () => {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+    const cookieStore = await cookies();
+    const url = `${BACKEND_URL}/api/v1/properties/agent/properties`;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieStore.toString(),
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch owner properties: ${response.status}`);
+    }
+
+    const data: PropertiesApiResponse = await response.json();
+    return {
+      success: true,
+      data: data.data,
+    };
+  } catch (error) {
+    console.error("Error fetching owner properties:", error);
+    return {
+      success: false,
+      data: [],
+
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }

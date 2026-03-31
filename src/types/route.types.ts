@@ -3,6 +3,7 @@ export interface Route {
   items: {
     title: string;
     url: string;
+    icon?: string; // lucide-react icon name
     isActive?: boolean;
   }[];
 }

@@ -30,9 +30,9 @@ export function RegisterForm({
   const router = useRouter();
 
   if (path === pathname) {
-    defaultValues.role = "provider";
+    defaultValues.role = "AGENT";
   } else {
-    defaultValues.role = "customer";
+    defaultValues.role = "USER";
   }
 
   const form = useForm({

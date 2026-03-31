@@ -7,18 +7,27 @@ export const ProviderRoutes: Route[] = [
       {
         title: "Dashboard",
         url: "/agent-dashboard",
+        icon: "LayoutDashboard",
       },
       {
-        title: "Create Shop",
-        url: "/agent-dashboard/create-shop",
+        title: "Create Property",
+        url: "/agent-dashboard/create-property",
+        icon: "Plus",
       },
       {
-        title: "Meals",
-        url: "/agent-dashboard/meals",
+        title: "My Properties",
+        url: "/agent-dashboard/my-properties",
+        icon: "Home",
       },
       {
-        title: "My Orders",
-        url: "/agent-dashboard/my-orders",
+        title: "My Bookings",
+        url: "/agent-dashboard/my-bookings",
+        icon: "Calendar",
+      },
+      {
+        title: "My Reviews",
+        url: "/agent-dashboard/my-reviews",
+        icon: "Star",
       },
     ],
   },
