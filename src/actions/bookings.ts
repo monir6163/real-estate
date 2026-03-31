@@ -1,8 +1,11 @@
 "use server";
 
+import { cookies } from "next/headers";
+
 interface BookingPayload {
+  agentId: string;
   propertyId: string;
-  visitDate?: string;
+  visitDate: string;
   message?: string;
 }
 
@@ -42,14 +45,21 @@ export const createBooking = async (payload: BookingPayload) => {
     if (!BACKEND_URL) {
       throw new Error("API URL not configured");
     }
+    const cookieStore = await cookies();
+
+    // Convert visitDate string to ISO date string for backend
+    const bookingData = {
+      ...payload,
+      visitDate: new Date(payload.visitDate).toISOString(),
+    };
 
     const response = await fetch(`${BACKEND_URL}/api/v1/bookings`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Cookie: cookieStore.toString(),
       },
-      credentials: "include",
-      body: JSON.stringify(payload),
+      body: JSON.stringify(bookingData),
     });
 
     if (!response.ok) {
@@ -85,8 +95,8 @@ export const getMyBookings = async () => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        Cookie: (await cookies()).toString(),
       },
-      credentials: "include",
       cache: "no-store",
     });
 
@@ -121,8 +131,8 @@ export const getBookingById = async (id: string) => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        Cookie: (await cookies()).toString(),
       },
-      credentials: "include",
     });
 
     if (!response.ok) {
@@ -161,8 +171,8 @@ export const updateBookingStatus = async (
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          Cookie: (await cookies()).toString(),
         },
-        credentials: "include",
         body: JSON.stringify({ status }),
       },
     );

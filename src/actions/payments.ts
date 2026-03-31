@@ -1,12 +1,13 @@
 "use server";
 
+import { cookies } from "next/headers";
+
 interface CheckoutSessionResponse {
   success: boolean;
   message: string;
   data: {
-    id: string;
-    clientSecret: string;
-    url?: string;
+    checkoutUrl: string;
+    sessionId: string;
   };
 }
 
@@ -34,6 +35,7 @@ export const createBookingCheckout = async (bookingId: string) => {
     if (!BACKEND_URL) {
       throw new Error("API URL not configured");
     }
+    const cookieStore = await cookies();
 
     const response = await fetch(
       `${BACKEND_URL}/api/v1/payments/checkout/booking/${bookingId}`,
@@ -41,8 +43,8 @@ export const createBookingCheckout = async (bookingId: string) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Cookie: cookieStore.toString(),
         },
-        credentials: "include",
       },
     );
 
@@ -78,8 +80,8 @@ export const getMyPayments = async () => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        Cookie: (await cookies()).toString(),
       },
-      credentials: "include",
       cache: "no-store",
     });
 

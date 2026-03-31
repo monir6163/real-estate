@@ -1,6 +1,7 @@
 "use client";
 
 import { getPropertyById } from "@/actions/properties";
+import BookPropertyModal from "@/components/BookPropertyModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -369,6 +370,27 @@ export default function PropertyDetailPage() {
 
           {/* Sidebar - Agent Info & Contact */}
           <div className="lg:col-span-1">
+            {/* Booking Card */}
+            <Card className="p-6 mb-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
+              <div className="mb-4">
+                <p className="text-sm text-slate-600 dark:text-slate-300 mb-1">
+                  Start Your Journey
+                </p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {formatPrice(property.price)}
+                </p>
+              </div>
+              <BookPropertyModal
+                propertyId={property.id}
+                propertyTitle={property.title}
+                propertyPrice={property.price}
+                agentId={property.agent?.id || ""}
+              />
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-3 text-center">
+                Booking fee: $49.99
+              </p>
+            </Card>
+
             {/* Agent Card */}
             {property.agent && (
               <Card className="p-6 mb-6 border-slate-200 dark:border-slate-700">

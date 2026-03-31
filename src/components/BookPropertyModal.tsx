@@ -1,6 +1,7 @@
 "use client";
 import { createBooking } from "@/actions/bookings";
 import { createBookingCheckout } from "@/actions/payments";
+import { getCurrentUser } from "@/actions/users";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,12 +21,14 @@ interface BookPropertyModalProps {
   propertyId: string;
   propertyTitle: string;
   propertyPrice: number;
+  agentId: string;
 }
 
 const BookPropertyModal = ({
   propertyId,
   propertyTitle,
   propertyPrice,
+  agentId,
 }: BookPropertyModalProps) => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -35,46 +38,63 @@ const BookPropertyModal = ({
   const [error, setError] = useState<string | null>(null);
 
   const handleBooking = async () => {
+    const { data } = await getCurrentUser();
     try {
       setLoading(true);
       setError(null);
 
+      if (!visitDate) {
+        setError("Please select a visit date");
+        setLoading(false);
+        return;
+      }
+
       // Step 1: Create the booking
       const bookingResult = await createBooking({
         propertyId,
-        visitDate: visitDate || undefined,
+        agentId: data.id,
+        visitDate,
         message: message || undefined,
       });
 
       if (!bookingResult.success) {
         setError(bookingResult.error || "Failed to create booking");
+        setLoading(false);
         return;
       }
 
       const bookingId = bookingResult.data?.id;
+      console.log("Booking created:", bookingId);
 
       // Step 2: Create checkout session for payment
       const checkoutResult = await createBookingCheckout(bookingId as string);
 
       if (!checkoutResult.success) {
         setError(checkoutResult.error || "Failed to create checkout session");
+        setLoading(false);
         return;
       }
 
-      // Step 3: Redirect to Stripe checkout or payment page
-      if (checkoutResult.data?.url) {
-        window.location.href = checkoutResult.data.url;
-      } else if (checkoutResult.data?.clientSecret) {
-        // Use Stripe Elements for embedded payment form
-        router.push(
-          `/checkout/${bookingId}?clientSecret=${checkoutResult.data.clientSecret}`,
-        );
-      }
+      console.log("Checkout result:", checkoutResult.data);
 
-      setOpen(false);
+      // Step 3: Redirect to Stripe checkout
+      if (checkoutResult.data?.checkoutUrl) {
+        console.log(
+          "Redirecting to Stripe URL:",
+          checkoutResult.data.checkoutUrl,
+        );
+        // Use window.location.href for external redirect
+        setTimeout(() => {
+          window.location.href = checkoutResult.data?.checkoutUrl || "";
+        }, 0);
+      } else {
+        setError(
+          "No payment method found. Please try again or contact support.",
+        );
+        setLoading(false);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
       setLoading(false);
     }
   };
@@ -116,13 +136,14 @@ const BookPropertyModal = ({
             <div>
               <label className="text-sm font-medium mb-2 flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                Preferred Visit Date (Optional)
+                Preferred Visit Date *
               </label>
               <Input
                 type="datetime-local"
                 value={visitDate}
                 onChange={(e) => setVisitDate(e.target.value)}
                 className="w-full"
+                required
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Choose when you'd like to visit the property
