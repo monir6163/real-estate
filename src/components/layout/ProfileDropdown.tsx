@@ -24,8 +24,8 @@ export function ProfileDropdown({ user }: { user: any }) {
     ],
     provider: [
       {
-        href: "/provider-dashboard",
-        label: "Provider Dashboard",
+        href: "/agent-dashboard",
+        label: "Agent Dashboard",
         icon: LayoutDashboardIcon,
       },
     ],

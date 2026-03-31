@@ -1,3 +1,4 @@
+import { getUserSession } from "@/actions/users";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ProfileDropdown } from "@/components/layout/ProfileDropdown";
 import {
@@ -14,7 +15,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { ROLES } from "@/constants/Roles";
-import { userService } from "@/services/user.service";
 import Link from "next/link";
 export const dynamic = "force-dynamic";
 export default async function DashboardLayout({
@@ -26,7 +26,7 @@ export default async function DashboardLayout({
   customer: React.ReactNode;
   provider: React.ReactNode;
 }) {
-  const { data } = await userService.getSession();
+  const { data } = await getUserSession();
   return (
     <SidebarProvider>
       <AppSidebar user={data?.user?.role} />
@@ -47,9 +47,9 @@ export default async function DashboardLayout({
                 <BreadcrumbPage>
                   {data?.user?.role === ROLES.ADMIN
                     ? "Admin Dashboard"
-                    : data?.user?.role === ROLES.CUSTOMER
+                    : data?.user?.role === ROLES.USER
                       ? "Dashboard"
-                      : "Provider Dashboard"}
+                      : "Agent Dashboard"}
                 </BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
@@ -61,7 +61,7 @@ export default async function DashboardLayout({
         <div className="flex flex-1 flex-col gap-4 p-4">
           {data?.user?.role === ROLES.ADMIN
             ? admin
-            : data?.user?.role === ROLES.CUSTOMER
+            : data?.user?.role === ROLES.USER
               ? customer
               : provider}
         </div>
