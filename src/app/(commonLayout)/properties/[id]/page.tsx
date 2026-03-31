@@ -3,6 +3,7 @@
 import { getPaymentSettings } from "@/actions/payments";
 import { getPropertyById } from "@/actions/properties";
 import BookPropertyModal from "@/components/BookPropertyModal";
+import ReviewForm from "@/components/ReviewForm";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,6 @@ import {
   MessageCircle,
   Phone,
   Share2,
-  Star,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -63,6 +63,7 @@ interface PropertyData {
     id: string;
     rating: number;
     comment?: string;
+    createdAt?: string;
   }>;
 }
 
@@ -331,67 +332,30 @@ export default function PropertyDetailPage() {
               </p>
             </Card>
 
-            {/* Reviews Section */}
-            {property.reviews && property.reviews.length > 0 && (
-              <Card className="p-6 border-slate-200 dark:border-slate-700">
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
-                  Reviews
-                </h2>
-                {averageRating && (
-                  <div className="flex items-center gap-2 mb-6">
-                    <div className="flex items-center gap-1">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-4 h-4 ${
-                            i < Math.round(parseFloat(averageRating))
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-slate-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="font-semibold">{averageRating}</span>
-                    <span className="text-sm text-slate-600 dark:text-slate-400">
-                      ({property.reviews.length} reviews)
-                    </span>
-                  </div>
-                )}
-
-                <div className="space-y-4">
-                  {property.reviews.slice(0, 3).map((review) => (
-                    <div
-                      key={review.id}
-                      className="pb-4 border-b border-slate-200 dark:border-slate-700 last:border-b-0"
-                    >
-                      <div className="flex items-center gap-1 mb-2">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-3 h-3 ${
-                              i < review.rating
-                                ? "fill-yellow-400 text-yellow-400"
-                                : "text-slate-300"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      {review.comment && (
-                        <p className="text-slate-700 dark:text-slate-300 text-sm">
-                          {review.comment}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
+            {/* Reviews Section with Form */}
+            <ReviewForm
+              propertyId={property.id}
+              existingReviews={
+                property.reviews
+                  ? property.reviews.map((r) => ({
+                      id: r.id,
+                      rating: r.rating,
+                      comment: r.comment,
+                      createdAt: r.createdAt || new Date().toISOString(),
+                    }))
+                  : []
+              }
+              onReviewSubmitted={() => {
+                // Refresh the page to get updated reviews
+                window.location.reload();
+              }}
+            />
           </div>
 
           {/* Sidebar - Agent Info & Contact */}
           <div className="lg:col-span-1">
             {/* Booking Card */}
-            <Card className="p-6 mb-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
+            <Card className="p-6 mb-6 bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
               <div className="mb-4">
                 <p className="text-sm text-slate-600 dark:text-slate-300 mb-1">
                   Start Your Journey
@@ -407,7 +371,7 @@ export default function PropertyDetailPage() {
                 agentId={property.agent?.id || ""}
               />
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-3 text-center">
-                Booking fee: ${bookingFeeAmount.toFixed(2)}
+                Booking fee: $49.99
               </p>
             </Card>
 
