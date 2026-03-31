@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { authClient } from "@/lib/auth-client";
+import { Input } from "@/components/ui/input";
 import {
   ArrowRight,
   CheckCircle2,
@@ -16,41 +16,117 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const token = searchParams.get("token");
-  const [status, setStatus] = useState<"loading" | "success" | "error">(
-    token ? "loading" : "error",
-  );
+  const email = searchParams.get("email");
+
+  const [status, setStatus] = useState<
+    "input" | "loading" | "success" | "error"
+  >(email ? "input" : "error");
   const [error, setError] = useState<string | null>(
-    token ? null : "No verification token found.",
+    email ? null : "No email provided. Please register first.",
   );
+  const [otp, setOtp] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
 
   useEffect(() => {
-    if (!token) return;
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendTimer]);
 
-    const verify = async () => {
-      const { error } = await authClient.verifyEmail({
-        query: { token },
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!email) {
+      setError("Email is missing. Please register again.");
+      setStatus("error");
+      return;
+    }
+
+    if (otp.length !== 6) {
+      toast.error("OTP must be 6 digits");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setStatus("loading");
+
+      const response = await fetch(`${API_URL}/api/v1/auth/verify-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ email, otp }),
       });
 
-      if (error) {
-        setStatus("error");
-        setError(error.message || "Failed to verify email.");
-        toast.error("Email verification failed.");
-      } else {
-        setStatus("success");
-        toast.success("Email verified successfully!");
-        // Optional: auto-redirect after delay
-        setTimeout(() => {
-          router.push("/login");
-        }, 5000);
-      }
-    };
+      const data = await response.json();
 
-    verify();
-  }, [token, router]);
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to verify email");
+      }
+
+      setStatus("success");
+      toast.success("Email verified successfully!");
+
+      // Redirect to login after 3 seconds
+      setTimeout(() => {
+        router.push("/login");
+      }, 3000);
+    } catch (err) {
+      setStatus("error");
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to verify email";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (!email) {
+      setError("Email is missing.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await fetch(
+        `${API_URL}/api/v1/auth/resend-verification-email`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ email }),
+        },
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to resend OTP");
+      }
+
+      toast.success("OTP sent to your email");
+      setResendTimer(60);
+      setOtp("");
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to resend OTP";
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-background via-background to-primary/5">
@@ -68,6 +144,86 @@ export function VerifyEmailContent() {
         {/* Status Card */}
         <Card className="border-2">
           <CardContent className="pt-6">
+            {status === "input" && (
+              <form onSubmit={handleVerifyOTP} className="space-y-6">
+                <div className="flex flex-col items-center text-center space-y-4">
+                  <div className="relative">
+                    <div className="w-20 h-20 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                      <Mail className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h1 className="text-3xl font-bold text-foreground">
+                      Verify Your Email
+                    </h1>
+                    <p className="text-muted-foreground text-sm">
+                      We've sent a 6-digit code to
+                    </p>
+                    <p className="text-sm font-semibold text-foreground break-all">
+                      {email}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium">
+                    Enter OTP Code
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="000000"
+                    value={otp}
+                    onChange={(e) =>
+                      setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                    }
+                    maxLength={6}
+                    className="text-center text-2xl tracking-widest font-bold text-foreground"
+                    disabled={isLoading}
+                    autoFocus
+                  />
+                  <p className="text-xs text-muted-foreground text-center">
+                    Enter the 6-digit code sent to your email
+                  </p>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                  disabled={isLoading || otp.length !== 6}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    <>
+                      Verify Email
+                      <ArrowRight className="ml-2 w-4 h-4" />
+                    </>
+                  )}
+                </Button>
+
+                <div className="text-center space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Didn't receive the code?
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResendOTP}
+                    disabled={resendTimer > 0 || isLoading}
+                  >
+                    {resendTimer > 0
+                      ? `Resend in ${resendTimer}s`
+                      : "Resend OTP"}
+                  </Button>
+                </div>
+              </form>
+            )}
+
             {status === "loading" && (
               <div className="flex flex-col items-center text-center space-y-6 py-8">
                 <div className="relative">
@@ -117,7 +273,7 @@ export function VerifyEmailContent() {
                 <div className="w-full bg-green-500/5 border border-green-500/20 rounded-lg p-4">
                   <p className="text-sm text-green-700 dark:text-green-400 font-medium">
                     ✓ Account activated successfully
-                    <br />✓ You'll be redirected to login in 5 seconds
+                    <br />✓ You'll be redirected to login in 3 seconds
                   </p>
                 </div>
                 <Button asChild className="w-full" size="lg">
@@ -140,11 +296,10 @@ export function VerifyEmailContent() {
                 </div>
                 <div className="space-y-3">
                   <h1 className="text-3xl font-bold text-foreground">
-                    Verification Failed
+                    Verification Error
                   </h1>
                   <p className="text-muted-foreground text-sm max-w-sm">
-                    We couldn't verify your email address. The link may be
-                    expired or invalid.
+                    We couldn't verify your email address.
                   </p>
                 </div>
                 <div className="w-full bg-destructive/5 border border-destructive/20 rounded-lg p-4">
@@ -155,7 +310,7 @@ export function VerifyEmailContent() {
                         Error Details
                       </p>
                       <p className="text-xs text-destructive/80">
-                        {error || "The verification link is no longer valid."}
+                        {error || "Failed to verify email"}
                       </p>
                     </div>
                   </div>
@@ -164,7 +319,7 @@ export function VerifyEmailContent() {
                   <Button asChild className="w-full" size="lg">
                     <Link href="/register">
                       <Mail className="mr-2 w-4 h-4" />
-                      Request New Verification Link
+                      Register Again
                     </Link>
                   </Button>
                   <Button

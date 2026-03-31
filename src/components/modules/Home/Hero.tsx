@@ -1,11 +1,9 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Home, MapPin, Search } from "lucide-react";
-import { useState } from "react";
+import { DollarSign, Home } from "lucide-react";
+import Link from "next/link";
 
 const HeroSection = () => {
-  const [tab, setTab] = useState<"buy" | "rent">("buy");
-
   return (
     <section className="relative min-h-150 lg:min-h-175 flex items-center overflow-hidden">
       <img
@@ -38,72 +36,32 @@ const HeroSection = () => {
             rent with confidence.
           </p>
 
-          {/* Search Card */}
+          {/* Call-to-Action Section */}
           <div
-            className="bg-card rounded-2xl shadow-2xl p-1 max-w-xl animate-fade-up"
+            className="flex flex-col sm:flex-row gap-4 animate-fade-up"
             style={{ animationDelay: "0.3s" }}
           >
-            {/* Tabs */}
-            <div className="flex gap-1 p-1">
-              <button
-                onClick={() => setTab("buy")}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                  tab === "buy"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-secondary"
-                }`}
-              >
-                Buy
-              </button>
-              <button
-                onClick={() => setTab("rent")}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                  tab === "rent"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-secondary"
-                }`}
-              >
-                Rent
-              </button>
-            </div>
-
-            <div className="p-4 space-y-3">
-              <div className="flex items-center gap-2 bg-secondary rounded-xl px-4 py-3">
-                <MapPin className="w-4 h-4 text-primary shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Enter city, neighborhood, or ZIP"
-                  className="bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none w-full"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center gap-2 bg-secondary rounded-xl px-4 py-3">
-                  <Home className="w-4 h-4 text-primary shrink-0" />
-                  <select className="bg-transparent text-sm text-muted-foreground outline-none w-full">
-                    <option>Property Type</option>
-                    <option>Apartment</option>
-                    <option>House</option>
-                    <option>Villa</option>
-                    <option>Commercial</option>
-                    <option>Land</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-2 bg-secondary rounded-xl px-4 py-3">
-                  <DollarSign className="w-4 h-4 text-primary shrink-0" />
-                  <select className="bg-transparent text-sm text-muted-foreground outline-none w-full">
-                    <option>Price Range</option>
-                    <option>$0 - $500K</option>
-                    <option>$500K - $1M</option>
-                    <option>$1M - $5M</option>
-                    <option>$5M+</option>
-                  </select>
-                </div>
-              </div>
-              <Button size="lg" className="w-full">
-                <Search className="w-4 h-4" />
-                Search Properties
-              </Button>
-            </div>
+            <Button
+              size="lg"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-8"
+              asChild
+            >
+              <Link href="/properties">
+                <Home className="w-4 h-4 mr-2" />
+                Browse Properties
+              </Link>
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white/20  hover:bg-white/10 px-8"
+              asChild
+            >
+              <Link href="/become-agent">
+                <DollarSign className="w-4 h-4 mr-2" />
+                Find an Agent
+              </Link>
+            </Button>
           </div>
 
           {/* Stats */}

@@ -25,7 +25,7 @@ export function RegisterForm({
   ...props
 }: React.ComponentProps<"div">) {
   const [showPassword, setShowPassword] = React.useState(false);
-  const pathname = "/become-provider";
+  const pathname = "/become-agent";
   const path = usePathname();
   const router = useRouter();
 
@@ -160,14 +160,14 @@ export function RegisterForm({
 
               <Button type="submit" className="w-full">
                 {path === pathname
-                  ? "Create a Provider Account"
+                  ? "Create a Agent Account"
                   : "Create your account"}
               </Button>
               {path !== pathname && (
                 <FieldDescription className="text-center text-red-600">
-                  Become a provider{" "}
+                  Become a Agent{" "}
                   <Link
-                    href="/become-provider"
+                    href="/become-agent"
                     className="text-primary hover:underline"
                   >
                     Click here

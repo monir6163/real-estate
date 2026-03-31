@@ -2,6 +2,25 @@
 
 A modern full-stack real estate platform built with Next.js, TypeScript, Tailwind CSS, and Shadcn/ui. This client application provides a comprehensive property management system with role-based access control for admins, agents, and users.
 
+# Credentials for Testing
+
+- **Admin**
+  - Email:monirhossain@gmail.com
+  - Password:123456789
+
+- **Agent**
+  - Email:ultrasrealpro@gmail.com
+  - Password:12345678
+
+- **user**
+  - Email:monirdev1@gmail.com
+  - Password:12345678
+
+# Live Demo
+
+- **Frontend:** [https://real-estate-client-drab-three.vercel.app](https://real-estate-client-drab-three.vercel.app)
+- **Backend API:** [https://real-state-server-cyan.vercel.app](https://real-state-server-cyan.vercel.app)
+
 ## 🚀 Features
 
 ### Public Features
