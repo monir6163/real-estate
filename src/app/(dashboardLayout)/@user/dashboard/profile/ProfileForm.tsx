@@ -150,7 +150,11 @@ export default function ProfileForm({ user }: ProfileFormProps) {
                 <Label htmlFor="role">Role</Label>
                 <Input
                   id="role"
-                  value={user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                  value={
+                    user.role
+                      ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+                      : ""
+                  }
                   disabled
                   className="bg-muted cursor-not-allowed"
                 />
@@ -160,7 +164,10 @@ export default function ProfileForm({ user }: ProfileFormProps) {
                 <Input
                   id="status"
                   value={
-                    user.status.charAt(0).toUpperCase() + user.status.slice(1)
+                    user.status
+                      ? user.status.charAt(0).toUpperCase() +
+                        user.status.slice(1)
+                      : ""
                   }
                   disabled
                   className="bg-muted cursor-not-allowed"

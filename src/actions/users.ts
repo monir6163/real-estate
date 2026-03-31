@@ -26,3 +26,29 @@ export const getUserSession = async () => {
     };
   }
 };
+
+export const getCurrentUser = async () => {
+  try {
+    const cookieStore = await cookies();
+    const res = await fetch(`${BACKEND_URL}/api/v1/auth/me`, {
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch user data");
+    }
+
+    const result = await res.json();
+    return { data: result.data, error: null, status: true };
+  } catch (error) {
+    console.log(error);
+    return {
+      data: null,
+      message: "Failed to fetch user data",
+      status: false,
+    };
+  }
+};

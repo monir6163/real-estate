@@ -27,7 +27,7 @@ interface ProfileCardProps {
 export default function ProfileCard({ user }: ProfileCardProps) {
   const getInitials = (name: string) => {
     return name
-      .split(" ")
+      ?.split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase()

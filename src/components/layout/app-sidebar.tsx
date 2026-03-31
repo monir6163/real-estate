@@ -27,11 +27,11 @@ export function AppSidebar({
     case ROLES.ADMIN:
       routes = AdminRoutes;
       break;
-    case ROLES.CUSTOMER:
+    case ROLES.USER:
       routes = CustomerRoutes;
       break;
 
-    case ROLES.PROVIDER:
+    case ROLES.AGENT:
       routes = ProviderRoutes;
       break;
 

@@ -19,12 +19,12 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 export default async function DashboardLayout({
   admin,
-  customer,
-  provider,
+  user,
+  agent,
 }: {
   admin: React.ReactNode;
-  customer: React.ReactNode;
-  provider: React.ReactNode;
+  user: React.ReactNode;
+  agent: React.ReactNode;
 }) {
   const { data } = await getUserSession();
   return (
@@ -62,8 +62,8 @@ export default async function DashboardLayout({
           {data?.user?.role === ROLES.ADMIN
             ? admin
             : data?.user?.role === ROLES.USER
-              ? customer
-              : provider}
+              ? user
+              : agent}
         </div>
       </SidebarInset>
     </SidebarProvider>

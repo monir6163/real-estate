@@ -1,10 +1,10 @@
-import { userService } from "@/services/user.service";
+import { getCurrentUser } from "@/actions/users";
 import { User } from "@/types";
 import ProfileCard from "./ProfileCard";
 import ProfileForm from "./ProfileForm";
 
 export default async function ProfilePage() {
-  const { data: user, status } = await userService.getCurrentUser();
+  const { data: user, status } = await getCurrentUser();
 
   return (
     <div className="container mx-auto py-8 px-4">
