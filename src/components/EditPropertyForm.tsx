@@ -1,6 +1,6 @@
 "use client";
 
-import { createProperty } from "@/actions/properties";
+import { updateProperty } from "@/actions/properties";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,28 +19,69 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { defaultPropertyValues } from "@/schema/propertySchema";
 import { useForm } from "@tanstack/react-form";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export default function CreatePropertyForm() {
+interface PropertyImage {
+  id: string;
+  url: string;
+}
+
+interface Property {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  location: string;
+  address: string;
+  bedrooms: number;
+  bathrooms: number;
+  area: number;
+  type: string;
+  listingType: string;
+  status: string;
+  thumbnail: string;
+  isFeatured: boolean;
+  isPremium: boolean;
+  createdAt: string;
+  updatedAt: string;
+  propertyImages?: PropertyImage[];
+}
+
+interface EditPropertyFormProps {
+  property: Property;
+}
+
+export default function EditPropertyForm({ property }: EditPropertyFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [newThumbnailFile, setNewThumbnailFile] = useState<File | null>(null);
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
 
   const form = useForm({
-    defaultValues: defaultPropertyValues,
+    defaultValues: {
+      title: property.title,
+      description: property.description,
+      location: property.location,
+      address: property.address || "",
+      type: property.type,
+      listingType: property.listingType,
+      status: property.status || "AVAILABLE",
+      price: property.price,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
+      area: property.area,
+      isPremium: property.isPremium,
+      isFeatured: property.isFeatured,
+      thumbnail: null as any,
+      propertyImages: [] as any,
+    },
     onSubmit: async ({ value }: { value: any }) => {
-      console.log(value);
       try {
         setIsLoading(true);
 
-        // Validate required fields
-        if (!value.thumbnail || !(value.thumbnail instanceof File)) {
-          throw new Error("Thumbnail image is required");
-        }
-
-        // Create FormData for multipart upload
+        // Create FormData for multipart update
         const formData = new FormData();
 
         // Add form fields - string values
@@ -60,31 +101,31 @@ export default function CreatePropertyForm() {
 
         // Add form fields - boolean values (sent as strings, backend will parse)
         formData.append("isPremium", String(value.isPremium === true));
-        formData.append("isFeatured", String(value.isFeatured === true));
 
-        // Add thumbnail file
-        formData.append("thumbnail", value.thumbnail);
+        // Add new thumbnail file if selected
+        if (newThumbnailFile) {
+          formData.append("thumbnail", newThumbnailFile);
+        }
 
-        // Add property images
-        if (value.propertyImages && value.propertyImages.length > 0) {
-          value.propertyImages.forEach((imageFile: File) => {
+        // Add new property images if selected
+        if (newImageFiles && newImageFiles.length > 0) {
+          newImageFiles.forEach((imageFile: File) => {
             formData.append("images", imageFile);
           });
         }
 
-        // Submit to backend via server action
-        const result = await createProperty(formData);
+        // Submit to backend
+        const result = await updateProperty(property.id, formData);
 
         if (!result.success) {
           throw new Error(result.message);
         }
 
-        toast.success(result.message || "Property created successfully!");
-        form.reset();
+        toast.success(result.message || "Property updated successfully!");
       } catch (error) {
-        console.error("Error creating property:", error);
+        console.error("Error updating property:", error);
         toast.error(
-          error instanceof Error ? error.message : "Failed to create property",
+          error instanceof Error ? error.message : "Failed to update property",
         );
       } finally {
         setIsLoading(false);
@@ -109,10 +150,10 @@ export default function CreatePropertyForm() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
-            Create New Property
+            Edit Property
           </h1>
           <p className="text-slate-600 dark:text-slate-400">
-            List your property to attract potential buyers or renters
+            Update your property listing details
           </p>
         </div>
 
@@ -120,7 +161,7 @@ export default function CreatePropertyForm() {
           <CardHeader>
             <CardTitle>Property Information</CardTitle>
             <CardDescription>
-              Fill in all required fields to create your listing
+              Update the details of your property listing
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -391,48 +432,111 @@ export default function CreatePropertyForm() {
                 }}
               />
 
-              {/* Thumbnail Image */}
+              {/* Status */}
               <form.Field
-                name="thumbnail"
-                children={(field) => {
-                  const isInvalid =
-                    field.state.meta.isTouched && !field.state.meta.isValid;
-                  return (
-                    <div className="space-y-2">
-                      <Label htmlFor="thumbnail">Thumbnail Image *</Label>
-                      <Input
-                        id="thumbnail"
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            field.handleChange(file);
-                          }
-                        }}
-                        className={isInvalid ? "border-red-500" : ""}
-                      />
-                      {field.state.value && (
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          Selected: {(field.state.value as File).name}
-                        </p>
-                      )}
-                      {isInvalid && renderFieldError(field.state.meta.errors)}
-                    </div>
-                  );
-                }}
-              />
-
-              {/* Property Images */}
-              <form.Field
-                name="propertyImages"
+                name="status"
                 children={(field) => (
                   <div className="space-y-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select
+                      value={field.state.value}
+                      onValueChange={(value) =>
+                        field.handleChange(value as any)
+                      }
+                    >
+                      <SelectTrigger id="status">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="AVAILABLE">Available</SelectItem>
+                        <SelectItem value="SOLD">Sold</SelectItem>
+                        <SelectItem value="RENTED">Rented</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              />
+
+              {/* Current Thumbnail */}
+              {property.thumbnail && (
+                <div className="space-y-2">
+                  <Label>Current Thumbnail</Label>
+                  <div className="relative h-48 w-full bg-slate-200 dark:bg-slate-700 rounded overflow-hidden">
+                    <img
+                      src={property.thumbnail}
+                      alt="Current thumbnail"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Select a new image below to replace it
+                  </p>
+                </div>
+              )}
+
+              {/* New Thumbnail Image */}
+              <form.Field
+                name="thumbnail"
+                children={() => (
+                  <div className="space-y-2">
+                    <Label htmlFor="thumbnail">
+                      New Thumbnail Image (Optional)
+                    </Label>
+                    <Input
+                      id="thumbnail"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setNewThumbnailFile(file);
+                        }
+                      }}
+                    />
+                    {newThumbnailFile && (
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        Selected: {newThumbnailFile.name}
+                      </p>
+                    )}
+                  </div>
+                )}
+              />
+
+              {/* Current Property Images */}
+              {property.propertyImages &&
+                property.propertyImages.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Current Property Images</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {property.propertyImages.map((image) => (
+                        <div
+                          key={image.id}
+                          className="relative h-24 bg-slate-200 dark:bg-slate-700 rounded overflow-hidden"
+                        >
+                          <img
+                            src={image.url}
+                            alt="Property"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Add new images below to add more photos
+                    </p>
+                  </div>
+                )}
+
+              {/* New Property Images */}
+              <form.Field
+                name="propertyImages"
+                children={() => (
+                  <div className="space-y-2">
                     <Label htmlFor="propertyImages">
-                      Additional Property Images (Optional)
+                      Add Additional Property Images (Optional)
                     </Label>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                      Select multiple images from your device
+                      Select multiple images to add to your property
                     </p>
                     <Input
                       id="propertyImages"
@@ -441,45 +545,22 @@ export default function CreatePropertyForm() {
                       multiple
                       onChange={(e) => {
                         const files = Array.from(e.target.files || []);
-                        field.handleChange(files);
+                        setNewImageFiles(files);
                       }}
                     />
-                    {field.state.value && field.state.value.length > 0 && (
+                    {newImageFiles && newImageFiles.length > 0 && (
                       <div className="text-sm text-slate-600 dark:text-slate-400">
                         <p>Selected images:</p>
                         <ul className="list-disc list-inside">
-                          {field.state.value.map(
-                            (file: File, index: number) => (
-                              <li key={index}>{file.name}</li>
-                            ),
-                          )}
+                          {newImageFiles.map((file: File, index: number) => (
+                            <li key={index}>{file.name}</li>
+                          ))}
                         </ul>
                       </div>
                     )}
                   </div>
                 )}
               />
-
-              {/* Checkbox */}
-              {/* <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <form.Field
-                  name="isPremium"
-                  children={(field) => (
-                    <div className="flex items-center gap-3">
-                      <Checkbox
-                        id="isPremium"
-                        checked={field.state.value}
-                        onCheckedChange={(checked) =>
-                          field.handleChange(!!checked)
-                        }
-                      />
-                      <Label htmlFor="isPremium" className="cursor-pointer">
-                        Mark as Premium Listing
-                      </Label>
-                    </div>
-                  )}
-                />
-              </div> */}
 
               {/* Submit Button */}
               <div className="flex gap-4 pt-6">
@@ -488,15 +569,15 @@ export default function CreatePropertyForm() {
                   disabled={isLoading}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  {isLoading ? "Creating property..." : "Create Property"}
+                  {isLoading ? "Updating property..." : "Update Property"}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => form.reset()}
+                  onClick={() => window.history.back()}
                   disabled={isLoading}
                 >
-                  Reset Form
+                  Cancel
                 </Button>
               </div>
             </form>

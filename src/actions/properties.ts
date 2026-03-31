@@ -257,3 +257,242 @@ export const ownerGetProperties = async () => {
     };
   }
 };
+
+export const createProperty = async (formData: FormData) => {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+
+    const cookieStore = await cookies();
+    const url = `${BACKEND_URL}/api/v1/properties`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
+      body: formData,
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(
+        error.message || `Failed to create property: ${response.status}`,
+      );
+    }
+
+    const data: { success: boolean; message: string; data: PropertyResponse } =
+      await response.json();
+    return {
+      success: true,
+      message: data.message,
+      data: data.data,
+    };
+  } catch (error) {
+    console.error("Error creating property:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to create property",
+      data: null,
+    };
+  }
+};
+
+export const deleteProperty = async (propertyId: string) => {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+
+    const cookieStore = await cookies();
+    const url = `${BACKEND_URL}/api/v1/properties/${propertyId}`;
+
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      let errorMessage = "Failed to delete property";
+      try {
+        const error = await response.json();
+        errorMessage =
+          error.message || `Failed to delete property: ${response.status}`;
+      } catch {
+        errorMessage = `Failed to delete property: ${response.status}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    // Handle 204 No Content or empty responses
+    let message = "Property deleted successfully";
+    if (
+      response.status !== 204 &&
+      response.headers.get("content-length") !== "0"
+    ) {
+      try {
+        const data: { success: boolean; message: string } =
+          await response.json();
+        message = data.message || message;
+      } catch {
+        // Response is empty or not JSON, that's okay for DELETE
+      }
+    }
+
+    return {
+      success: true,
+      message,
+    };
+  } catch (error) {
+    console.error("Error deleting property:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to delete property",
+    };
+  }
+};
+
+export const updateProperty = async (
+  propertyId: string,
+  formData: FormData,
+) => {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+
+    const cookieStore = await cookies();
+    const url = `${BACKEND_URL}/api/v1/properties/${propertyId}`;
+
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
+      body: formData,
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(
+        error.message || `Failed to update property: ${response.status}`,
+      );
+    }
+
+    const data: { success: boolean; message: string; data: PropertyResponse } =
+      await response.json();
+    return {
+      success: true,
+      message: data.message,
+      data: data.data,
+    };
+  } catch (error) {
+    console.error("Error updating property:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to update property",
+      data: null,
+    };
+  }
+};
+
+export const ownerBookings = async () => {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+
+    const cookieStore = await cookies();
+    const url = `${BACKEND_URL}/api/v1/properties/agent/bookings`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieStore.toString(),
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch owner bookings: ${response.status}`);
+    }
+
+    const data: { success: boolean; message: string; data: any[] } =
+      await response.json();
+    return {
+      success: true,
+      data: data.data,
+    };
+  } catch (error) {
+    console.error("Error fetching owner bookings:", error);
+    return {
+      success: false,
+      data: [],
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+export const updateBookingStatus = async (
+  bookingId: string,
+  status: "APPROVED" | "REJECTED",
+) => {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+
+    const cookieStore = await cookies();
+    const url = `${BACKEND_URL}/api/v1/bookings/${bookingId}/status`;
+
+    const response = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieStore.toString(),
+      },
+      body: JSON.stringify({ status }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(
+        error.message || `Failed to update booking status: ${response.status}`,
+      );
+    }
+
+    const data: { success: boolean; message: string; data: any } =
+      await response.json();
+    return {
+      success: true,
+      message: data.message,
+      data: data.data,
+    };
+  } catch (error) {
+    console.error("Error updating booking status:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to update booking status",
+      data: null,
+    };
+  }
+};

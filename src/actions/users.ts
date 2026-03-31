@@ -168,3 +168,8 @@ export const updateUserProfile = async (profileData: any) => {
     };
   }
 };
+
+export const getCookie = async () => {
+  const cookieStore = await cookies();
+  return cookieStore.toString();
+};
