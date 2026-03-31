@@ -70,13 +70,13 @@ export const getAllProperties = async (filters?: PropertiesFilter) => {
     const params = new URLSearchParams();
     if (filters?.page) params.append("page", filters.page.toString());
     if (filters?.limit) params.append("limit", filters.limit.toString());
-    if (filters?.search) params.append("search", filters.search);
+    if (filters?.search) params.append("searchTerm", filters.search);
     if (filters?.sortBy) params.append("sortBy", filters.sortBy);
     if (filters?.sortOrder) params.append("sortOrder", filters.sortOrder);
     if (filters?.minPrice)
-      params.append("minPrice", filters.minPrice.toString());
+      params.append("price[gte]", filters.minPrice.toString());
     if (filters?.maxPrice)
-      params.append("maxPrice", filters.maxPrice.toString());
+      params.append("price[lte]", filters.maxPrice.toString());
     if (filters?.bedrooms)
       params.append("bedrooms", filters.bedrooms.toString());
     if (filters?.bathrooms)

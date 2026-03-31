@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Property } from "@/lib/demo-data";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function PropertiesPage() {
@@ -25,8 +25,11 @@ export default function PropertiesPage() {
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [minPrice, setMinPrice] = useState<number | "">("");
+  const [maxPrice, setMaxPrice] = useState<number | "">("");
+  const [bedrooms, setBedrooms] = useState<number | "">("");
+  const [bathrooms, setBathrooms] = useState<number | "">("");
+  const [location, setLocation] = useState("");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
@@ -46,11 +49,20 @@ export default function PropertiesPage() {
       if (searchQuery.trim()) {
         filters.search = searchQuery.trim();
       }
-      if (filterType && filterType !== "all") {
-        filters.type = filterType;
+      if (minPrice !== "") {
+        filters.minPrice = minPrice;
       }
-      if (filterStatus && filterStatus !== "all") {
-        filters.status = filterStatus;
+      if (maxPrice !== "") {
+        filters.maxPrice = maxPrice;
+      }
+      if (bedrooms !== "") {
+        filters.bedrooms = bedrooms;
+      }
+      if (bathrooms !== "") {
+        filters.bathrooms = bathrooms;
+      }
+      if (location.trim()) {
+        filters.location = location.trim();
       }
 
       const result = await getAllProperties(filters);
@@ -112,7 +124,17 @@ export default function PropertiesPage() {
 
   useEffect(() => {
     fetchProperties();
-  }, [currentPage, searchQuery, filterType, filterStatus, sortBy, sortOrder]);
+  }, [
+    currentPage,
+    searchQuery,
+    minPrice,
+    maxPrice,
+    bedrooms,
+    bathrooms,
+    location,
+    sortBy,
+    sortOrder,
+  ]);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -121,12 +143,24 @@ export default function PropertiesPage() {
 
   const handleReset = () => {
     setSearchQuery("");
-    setFilterType("all");
-    setFilterStatus("all");
+    setMinPrice("");
+    setMaxPrice("");
+    setBedrooms("");
+    setBathrooms("");
+    setLocation("");
     setSortBy("createdAt");
     setSortOrder("desc");
     setCurrentPage(1);
   };
+
+  // Check if any filters are applied
+  const hasActiveFilters =
+    searchQuery !== "" ||
+    minPrice !== "" ||
+    maxPrice !== "" ||
+    bedrooms !== "" ||
+    bathrooms !== "" ||
+    location !== "";
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
@@ -144,130 +178,255 @@ export default function PropertiesPage() {
 
       {/* Filters Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-8">
-          <div className="flex items-center gap-2 mb-6">
-            <SlidersHorizontal className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Filters & Search
-            </h2>
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-8 border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                Search & Filter
+              </h2>
+            </div>
+            {hasActiveFilters && (
+              <button
+                onClick={handleReset}
+                className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+              >
+                Clear all
+              </button>
+            )}
           </div>
 
-          <form onSubmit={handleSearch}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-              {/* Search */}
-              <div className="lg:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Search
+          <form onSubmit={handleSearch} className="space-y-6">
+            {/* Search Section */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                Search Properties
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                <Input
+                  type="text"
+                  placeholder="Search by title, description, location..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 h-10"
+                />
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Searches in property titles, descriptions, and locations
+              </p>
+            </div>
+
+            {/* Price & Bedrooms Section */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
+                  Min Price
                 </label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                  <Input
-                    type="text"
-                    placeholder="Search by title, location..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
+                <Input
+                  type="number"
+                  placeholder="$"
+                  value={minPrice}
+                  onChange={(e) =>
+                    setMinPrice(e.target.value ? parseInt(e.target.value) : "")
+                  }
+                  className="h-10"
+                />
               </div>
 
-              {/* Property Type */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Property Type
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
+                  Max Price
                 </label>
-                <Select value={filterType} onValueChange={setFilterType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Types" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="APARTMENT">Apartment</SelectItem>
-                    <SelectItem value="HOUSE">House</SelectItem>
-                    <SelectItem value="COMMERCIAL">Commercial</SelectItem>
-                    <SelectItem value="LAND">Land</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input
+                  type="number"
+                  placeholder="$"
+                  value={maxPrice}
+                  onChange={(e) =>
+                    setMaxPrice(e.target.value ? parseInt(e.target.value) : "")
+                  }
+                  className="h-10"
+                />
               </div>
 
-              {/* Status */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Status
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
+                  Bedrooms
                 </label>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="AVAILABLE">Available</SelectItem>
-                    <SelectItem value="SOLD">Sold</SelectItem>
-                    <SelectItem value="RENTED">Rented</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input
+                  type="number"
+                  placeholder="Any"
+                  value={bedrooms}
+                  onChange={(e) =>
+                    setBedrooms(e.target.value ? parseInt(e.target.value) : "")
+                  }
+                  min="0"
+                  className="h-10"
+                />
               </div>
 
-              {/* Sort */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
+                  Bathrooms
+                </label>
+                <Input
+                  type="number"
+                  placeholder="Any"
+                  value={bathrooms}
+                  onChange={(e) =>
+                    setBathrooms(e.target.value ? parseInt(e.target.value) : "")
+                  }
+                  min="0"
+                  className="h-10"
+                />
+              </div>
+            </div>
+
+            {/* Location & Sorting Section */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
+                  Location
+                </label>
+                <Input
+                  type="text"
+                  placeholder="City, region, or area"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="h-10"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
                   Sort By
                 </label>
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sort By" />
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Select sort option" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="createdAt">Newest</SelectItem>
-                    <SelectItem value="price">Price</SelectItem>
-                    <SelectItem value="title">Title</SelectItem>
+                    <SelectItem value="createdAt">Newest First</SelectItem>
+                    <SelectItem value="price">Price: Low to High</SelectItem>
+                    <SelectItem value="title">Title: A to Z</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
+                  Order
+                </label>
+                <Select
+                  value={sortOrder}
+                  onValueChange={(value) =>
+                    setSortOrder(value as "asc" | "desc")
+                  }
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Select order" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="desc">Descending</SelectItem>
+                    <SelectItem value="asc">Ascending</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            <div className="flex gap-3">
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-2">
               <Button
                 type="submit"
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-blue-600 hover:bg-blue-700 text-white flex-1 h-10 font-medium"
               >
-                Apply Filters
+                Search Properties
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleReset}
-                className="text-slate-600 dark:text-slate-400"
-              >
-                Reset
-              </Button>
+              {hasActiveFilters && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleReset}
+                  className="flex items-center gap-2 h-10"
+                >
+                  <X className="w-4 h-4" />
+                  Clear
+                </Button>
+              )}
             </div>
           </form>
         </div>
 
-        {/* Results info */}
-        <div className="mb-6 flex justify-between items-center">
-          <p className="text-slate-600 dark:text-slate-400">
-            Showing {properties.length} of {totalProperties} properties
-          </p>
+        {/* Results Header */}
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="text-slate-600 dark:text-slate-400 font-medium">
+                {loading ? (
+                  <span className="animate-pulse">Loading...</span>
+                ) : (
+                  <>
+                    Found{" "}
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      {totalProperties}
+                    </span>{" "}
+                    {totalProperties === 1 ? "property" : "properties"}
+                    {hasActiveFilters && (
+                      <span className="text-blue-600 dark:text-blue-400 ml-2">
+                        (filtered)
+                      </span>
+                    )}
+                  </>
+                )}
+              </p>
+              {!loading && hasActiveFilters && (
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  Showing {properties.length} of {totalProperties} results
+                </p>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Error State */}
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-8">
-            <p className="text-red-800 dark:text-red-300">{error}</p>
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 mb-8">
+            <div className="flex items-start gap-4">
+              <div className="shrink-0">
+                <div className="flex items-center justify-center h-10 w-10 rounded-md bg-red-100 dark:bg-red-900/40">
+                  <X className="h-6 w-6 text-red-600 dark:text-red-400" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-red-800 dark:text-red-300 mb-1">
+                  Error loading properties
+                </h3>
+                <p className="text-sm text-red-700 dark:text-red-400">
+                  {error}
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Loading State */}
         {loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="bg-white dark:bg-slate-800 rounded-lg h-96 animate-pulse"
-              />
-            ))}
+          <div className="space-y-6 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-white dark:bg-slate-800 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700"
+                >
+                  <div className="w-full h-48 bg-slate-300 dark:bg-slate-700 animate-pulse" />
+                  <div className="p-4 space-y-3">
+                    <div className="h-4 bg-slate-300 dark:bg-slate-700 rounded animate-pulse w-3/4" />
+                    <div className="h-3 bg-slate-300 dark:bg-slate-700 rounded animate-pulse w-1/2" />
+                    <div className="h-3 bg-slate-300 dark:bg-slate-700 rounded animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -286,48 +445,75 @@ export default function PropertiesPage() {
 
         {/* Empty State */}
         {!loading && properties.length === 0 && !error && (
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-12 text-center mb-12">
-            <p className="text-slate-600 dark:text-slate-400 text-lg">
-              No properties found. Try adjusting your filters.
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-12 text-center mb-12 border border-slate-200 dark:border-slate-700">
+            <div className="flex w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full items-center justify-center mb-4">
+              <Search className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+              No properties found
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 mb-6">
+              {hasActiveFilters
+                ? "Try adjusting your search or filter criteria to find what you're looking for."
+                : "No properties available at the moment."}
             </p>
+            {hasActiveFilters && (
+              <Button
+                onClick={handleReset}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Clear all filters
+              </Button>
+            )}
           </div>
         )}
 
         {/* Pagination */}
         {!loading && totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2 mb-12">
-            <Button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              variant="outline"
-            >
-              Previous
-            </Button>
+          <div className="flex flex-col items-center gap-4 mb-12">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Page <span className="font-semibold">{currentPage}</span> of{" "}
+              <span className="font-semibold">{totalPages}</span>
+            </p>
+            <div className="flex justify-center items-center gap-2 flex-wrap">
+              <Button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                variant="outline"
+                className="h-10"
+              >
+                ← Previous
+              </Button>
 
-            <div className="flex items-center gap-1">
-              {[...Array(Math.min(5, totalPages))].map((_, idx) => {
-                const pageNum = Math.max(1, currentPage - 2) + idx;
-                if (pageNum > totalPages) return null;
-                return (
-                  <Button
-                    key={pageNum}
-                    onClick={() => setCurrentPage(pageNum)}
-                    variant={currentPage === pageNum ? "default" : "outline"}
-                    size="sm"
-                  >
-                    {pageNum}
-                  </Button>
-                );
-              })}
+              <div className="flex items-center gap-1">
+                {[...Array(Math.min(5, totalPages))].map((_, idx) => {
+                  const pageNum = Math.max(1, currentPage - 2) + idx;
+                  if (pageNum > totalPages) return null;
+                  return (
+                    <Button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      className="h-10 w-10"
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              <Button
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                disabled={currentPage === totalPages}
+                variant="outline"
+                className="h-10"
+              >
+                Next →
+              </Button>
             </div>
-
-            <Button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              variant="outline"
-            >
-              Next
-            </Button>
           </div>
         )}
       </div>
