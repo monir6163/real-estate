@@ -56,7 +56,12 @@ export const getCurrentUser = async () => {
 export const getAllUsers = async () => {
   try {
     const cookieStore = await cookies();
-    const response = await fetch(`${BACKEND_URL}/api/users`, {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+
+    const response = await fetch(`${BACKEND_URL}/api/v1/users`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -76,7 +81,7 @@ export const getAllUsers = async () => {
 
     const result = await response.json();
     return {
-      data: result,
+      data: result.data || result,
       message: "Users fetched successfully",
       status: true,
     };
@@ -93,7 +98,11 @@ export const getAllUsers = async () => {
 export const updateUserStatus = async (userId: string, status: string) => {
   try {
     const cookieStore = await cookies();
-    const response = await fetch(`${BACKEND_URL}/api/users/${userId}`, {
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+
+    const response = await fetch(`${BACKEND_URL}/api/v1/users/${userId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -114,7 +123,7 @@ export const updateUserStatus = async (userId: string, status: string) => {
 
     const result = await response.json();
     return {
-      data: result,
+      data: result.data || result,
       message: "User status updated successfully",
       status: true,
     };

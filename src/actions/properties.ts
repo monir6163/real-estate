@@ -496,3 +496,49 @@ export const updateBookingStatus = async (
     };
   }
 };
+
+export const togglePropertyFeatured = async (propertyId: string) => {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+
+    const cookieStore = await cookies();
+    const url = `${BACKEND_URL}/api/v1/properties/featured/${propertyId}`;
+
+    const response = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieStore.toString(),
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(
+        error.message || `Failed to toggle featured status: ${response.status}`,
+      );
+    }
+
+    const data: { success: boolean; message: string; data: PropertyResponse } =
+      await response.json();
+    return {
+      success: true,
+      message: data.message,
+      data: data.data,
+    };
+  } catch (error) {
+    console.error("Error toggling featured status:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to toggle featured status",
+      data: null,
+    };
+  }
+};

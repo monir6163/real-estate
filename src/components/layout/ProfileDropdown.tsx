@@ -13,23 +13,22 @@ import Logout from "./Logout";
 
 export function ProfileDropdown({ user }: { user: any }) {
   const role: Roles = user?.role;
-
   const roleBasedLinks = {
-    admin: [
+    ADMIN: [
       {
         href: "/admin-dashboard",
         label: "Admin Dashboard",
         icon: LayoutDashboardIcon,
       },
     ],
-    provider: [
+    AGENT: [
       {
         href: "/agent-dashboard",
         label: "Agent Dashboard",
         icon: LayoutDashboardIcon,
       },
     ],
-    customer: [
+    USER: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
       {
         href: "/dashboard/bookings",
@@ -40,8 +39,7 @@ export function ProfileDropdown({ user }: { user: any }) {
   };
 
   const links =
-    roleBasedLinks[role as keyof typeof roleBasedLinks] ||
-    roleBasedLinks.customer;
+    roleBasedLinks[role as keyof typeof roleBasedLinks] || roleBasedLinks.USER;
 
   return (
     <DropdownMenu modal={false}>

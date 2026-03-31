@@ -22,6 +22,13 @@ interface Property {
   thumbnail: string;
 }
 
+interface Agent {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+}
+
 interface Booking {
   id: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
@@ -29,6 +36,7 @@ interface Booking {
   visitDate?: string;
   createdAt: string;
   property: Property;
+  agent: Agent;
 }
 
 interface MyBookingsProps {
@@ -136,6 +144,41 @@ export default function MyBookings({ bookings }: MyBookingsProps) {
           </CardHeader>
 
           <CardContent className="space-y-4">
+            {/* User/Agent Info */}
+            <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide mb-3">
+                User Information
+              </p>
+              <div className="space-y-2">
+                <div>
+                  <p className="text-xs text-blue-600 dark:text-blue-300">
+                    Name
+                  </p>
+                  <p className="font-semibold text-slate-900 dark:text-white">
+                    {booking.agent.name}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-blue-600 dark:text-blue-300">
+                      Email
+                    </p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 break-all">
+                      {booking.agent.email}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-blue-600 dark:text-blue-300">
+                      Phone
+                    </p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                      {booking.agent.phone || "N/A"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Property Details */}
             <div className="grid grid-cols-2 gap-4 pb-4 border-b border-slate-200 dark:border-slate-700">
               <div>

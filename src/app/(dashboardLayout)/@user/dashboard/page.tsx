@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 interface BookingData {
   id: string;
   status: string;
+  propertyId?: string;
 }
 
 interface PaymentData {
@@ -56,17 +57,13 @@ export default function UserDashboard() {
 
   // Calculate stats
   const activeBookings = bookings.filter((b) => b.status === "PENDING").length;
-
-  // Total Paid: Sum of all COMPLETED payments (amount is in cents, divide by 100 for dollars)
-  const totalPaid = payments
-    .filter((p) => p.status === "COMPLETED")
-    .reduce((sum, p) => sum + p.amount, 0);
+  const totalBooked = bookings.length;
 
   // Saved Properties: TODO - Requires favorites/wishlist feature implementation
   const savedProperties = 0;
 
-  // Total Properties: TODO - Requires user properties listing or count from API
-  const totalProperties = 0;
+  // Properties Count: Unique properties booked
+  const propertiesCount = new Set(bookings.map((b) => b.propertyId)).size;
   return (
     <div className="p-8 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 min-h-screen">
       <div className="max-w-6xl mx-auto">
@@ -106,13 +103,13 @@ export default function UserDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">
-                  Total Paid
+                  Total Booked
                 </p>
                 <p className="text-3xl font-bold text-slate-900 dark:text-white">
-                  {loading ? "-" : `$${(totalPaid / 100).toFixed(2)}`}
+                  {loading ? "-" : totalBooked}
                 </p>
               </div>
-              <CreditCard className="w-10 h-10 text-green-600 opacity-20" />
+              <BookOpen className="w-10 h-10 text-green-600 opacity-20" />
             </div>
           </Card>
 
@@ -134,10 +131,10 @@ export default function UserDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">
-                  Properties
+                  Properties Count
                 </p>
                 <p className="text-3xl font-bold text-slate-900 dark:text-white">
-                  {loading ? "-" : totalProperties}
+                  {loading ? "-" : propertiesCount}
                 </p>
               </div>
               <Home className="w-10 h-10 text-purple-600 opacity-20" />

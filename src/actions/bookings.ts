@@ -119,6 +119,38 @@ export const getMyBookings = async () => {
   }
 };
 
+// Get all bookings (admin only)
+export const getAllBookings = async () => {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+
+    const response = await fetch(`${BACKEND_URL}/api/v1/bookings/admin`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: (await cookies()).toString(),
+      },
+      cache: "no-store",
+    });
+
+    const result = await response.json();
+    return {
+      success: true,
+      data: result.data || result,
+    };
+  } catch (error) {
+    console.error("Error fetching all bookings:", error);
+    return {
+      success: false,
+      data: [],
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
 // Get booking by ID
 export const getBookingById = async (id: string) => {
   try {

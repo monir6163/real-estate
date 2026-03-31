@@ -11,9 +11,9 @@ export const AdminRoutes: Route[] = [
         isActive: true,
       },
       {
-        title: "Categories",
-        url: "/admin-dashboard/all-categories",
-        icon: "Layers",
+        title: "All Properties",
+        url: "/admin-dashboard/all-properties",
+        icon: "Home",
       },
       {
         title: "All Users",
@@ -21,9 +21,9 @@ export const AdminRoutes: Route[] = [
         icon: "Users",
       },
       {
-        title: "All Orders",
-        url: "/admin-dashboard/all-orders",
-        icon: "ShoppingCart",
+        title: "All Bookings",
+        url: "/admin-dashboard/all-bookings",
+        icon: "Calendar",
       },
     ],
   },
