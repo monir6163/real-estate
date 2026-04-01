@@ -1,7 +1,5 @@
 "use client";
-import { createBooking } from "@/actions/bookings";
-import { createBookingCheckout, getPaymentSettings } from "@/actions/payments";
-import { getCurrentUser } from "@/actions/users";
+import { createBookingCheckout } from "@/actions/payments";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,15 +11,23 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Calendar, MessageSquare } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useState } from "react";
 
 interface BookPropertyModalProps {
   propertyId: string;
   propertyTitle: string;
   propertyPrice: number;
   agentId: string;
+  isLoggedIn?: boolean;
+  status?: string;
 }
 
 const BookPropertyModal = ({
@@ -29,41 +35,16 @@ const BookPropertyModal = ({
   propertyTitle,
   propertyPrice,
   agentId,
+  isLoggedIn = false,
+  status = "AVAILABLE",
 }: BookPropertyModalProps) => {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [visitDate, setVisitDate] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [bookingFeeAmount, setBookingFeeAmount] = useState<number>(49.99); // Default fallback
-  const [feesLoading, setFeesLoading] = useState(true);
-
-  // Fetch payment settings on component mount
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const result = await getPaymentSettings();
-        if (result.success && result.data) {
-          // Convert from cents to dollars if needed
-          const feeInDollars = result.data.bookingFeeAmount / 100;
-          setBookingFeeAmount(feeInDollars);
-        }
-      } catch (err) {
-        console.error("Failed to fetch booking fee:", err);
-        // Keep default fallback of 49.99
-      } finally {
-        setFeesLoading(false);
-      }
-    };
-
-    if (open) {
-      fetchSettings();
-    }
-  }, [open]);
 
   const handleBooking = async () => {
-    const { data } = await getCurrentUser();
     try {
       setLoading(true);
       setError(null);
@@ -74,25 +55,12 @@ const BookPropertyModal = ({
         return;
       }
 
-      // Step 1: Create the booking
-      const bookingResult = await createBooking({
+      // Step 1: Create checkout session for payment
+      const checkoutResult = await createBookingCheckout({
         propertyId,
-        agentId: data.id,
         visitDate,
         message: message || undefined,
       });
-
-      if (!bookingResult.success) {
-        setError(bookingResult.error || "Failed to create booking");
-        setLoading(false);
-        return;
-      }
-
-      const bookingId = bookingResult.data?.id;
-      console.log("Booking created:", bookingId);
-
-      // Step 2: Create checkout session for payment
-      const checkoutResult = await createBookingCheckout(bookingId as string);
 
       if (!checkoutResult.success) {
         setError(checkoutResult.error || "Failed to create checkout session");
@@ -102,7 +70,7 @@ const BookPropertyModal = ({
 
       console.log("Checkout result:", checkoutResult.data);
 
-      // Step 3: Redirect to Stripe checkout
+      // Step 2: Redirect to Stripe checkout
       if (checkoutResult.data?.checkoutUrl) {
         console.log(
           "Redirecting to Stripe URL:",
@@ -124,14 +92,61 @@ const BookPropertyModal = ({
     }
   };
 
+  const isPropertyUnavailable = status === "SOLD" || status === "RENTED";
+  const canBook = isLoggedIn && !isPropertyUnavailable;
+
+  const getDisabledReason = () => {
+    if (!isLoggedIn) {
+      return {
+        message: "Please log in to book a property",
+        action: (
+          <Link href="/login" className="text-blue-400 hover:underline">
+            Go to Login
+          </Link>
+        ),
+      };
+    }
+    if (status === "SOLD") {
+      return {
+        message: "This property has already been sold",
+        action: null,
+      };
+    }
+    if (status === "RENTED") {
+      return {
+        message: "This property has already been rented",
+        action: null,
+      };
+    }
+    return null;
+  };
+
+  const disabledReason = getDisabledReason();
+
   return (
     <>
-      <Button
-        onClick={() => setOpen(true)}
-        className="w-full sm:w-auto bg-primary hover:bg-primary/90"
-      >
-        Book Now
-      </Button>
+      {canBook ? (
+        <Button
+          onClick={() => setOpen(true)}
+          className="w-full sm:w-auto bg-primary hover:bg-primary/90"
+        >
+          Book Now
+        </Button>
+      ) : (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button disabled className="w-full sm:w-auto opacity-60">
+                Book Now
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs">
+              <p className="mb-2">{disabledReason?.message}</p>
+              {disabledReason?.action}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[500px]">
@@ -189,15 +204,13 @@ const BookPropertyModal = ({
               />
             </div>
 
-            {/* Booking Fee Info */}
+            {/* Payment Info */}
             <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-3 rounded-lg text-sm">
               <p className="font-semibold mb-1 text-blue-900 dark:text-blue-100">
-                Booking Fee
+                Payment Amount
               </p>
               <p className="text-blue-800 dark:text-blue-200">
-                {feesLoading
-                  ? "Loading fee information..."
-                  : `A booking fee of $${bookingFeeAmount.toFixed(2)} will be charged for this reservation.`}
+                {`You will be charged $${propertyPrice.toLocaleString()} for this property.`}
               </p>
             </div>
           </div>

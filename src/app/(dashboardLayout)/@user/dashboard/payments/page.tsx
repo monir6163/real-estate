@@ -70,7 +70,7 @@ export default function PaymentHistoryPage() {
   const getPurposeLabel = (purpose: string) => {
     switch (purpose) {
       case "BOOKING_FEE":
-        return "Booking Fee";
+        return "Property Payment";
       case "PREMIUM_LISTING_FEE":
         return "Premium Listing Fee";
       default:

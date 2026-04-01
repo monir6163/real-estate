@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AlertCircle, CheckCircle2, Clock, XCircle } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 interface Property {
@@ -46,6 +46,47 @@ interface MyBookingsProps {
 export default function MyBookings({ bookings }: MyBookingsProps) {
   const [isPending, startTransition] = useTransition();
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const canApproveBooking = (visitDate?: string) => {
+    if (!visitDate) return true;
+    const visitTime = new Date(visitDate).getTime();
+    if (Number.isNaN(visitTime)) return true;
+    return visitTime <= now;
+  };
+
+  const getVisitCountdown = (visitDate?: string) => {
+    if (!visitDate) return null;
+    const visitTime = new Date(visitDate).getTime();
+    if (Number.isNaN(visitTime)) return null;
+
+    const diff = visitTime - now;
+    if (diff <= 0) return "Visit time reached";
+
+    const totalSeconds = Math.floor(diff / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (days > 0) {
+      return `Starts in ${days}d ${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    if (hours > 0) {
+      return `Starts in ${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    return `Starts in ${minutes}m ${seconds}s`;
+  };
 
   const handleStatusUpdate = (
     bookingId: string,
@@ -126,150 +167,164 @@ export default function MyBookings({ bookings }: MyBookingsProps) {
 
   return (
     <div className="space-y-4">
-      {bookings.map((booking) => (
-        <Card
-          key={booking.id}
-          className="overflow-hidden hover:shadow-lg transition-shadow"
-        >
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="text-lg">
-                  {booking.property.title}
-                </CardTitle>
-                <CardDescription>{booking.property.location}</CardDescription>
-              </div>
-              {getStatusBadge(booking.status)}
-            </div>
-          </CardHeader>
+      {bookings.map((booking) => {
+        const canApprove = canApproveBooking(booking.visitDate);
+        const countdown = getVisitCountdown(booking.visitDate);
 
-          <CardContent className="space-y-4">
-            {/* User/Agent Info */}
-            <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="text-sm text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide mb-3">
-                User Information
-              </p>
-              <div className="space-y-2">
+        return (
+          <Card
+            key={booking.id}
+            className="overflow-hidden hover:shadow-lg transition-shadow"
+          >
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-xs text-blue-600 dark:text-blue-300">
-                    Name
-                  </p>
-                  <p className="font-semibold text-slate-900 dark:text-white">
-                    {booking.agent.name}
-                  </p>
+                  <CardTitle className="text-lg">
+                    {booking.property.title}
+                  </CardTitle>
+                  <CardDescription>{booking.property.location}</CardDescription>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                {getStatusBadge(booking.status)}
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              {/* User/Agent Info */}
+              <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                <p className="text-sm text-blue-600 dark:text-blue-400 font-semibold uppercase tracking-wide mb-3">
+                  User Information
+                </p>
+                <div className="space-y-2">
                   <div>
                     <p className="text-xs text-blue-600 dark:text-blue-300">
-                      Email
+                      Name
                     </p>
-                    <p className="text-sm text-slate-700 dark:text-slate-300 break-all">
-                      {booking.agent.email}
+                    <p className="font-semibold text-slate-900 dark:text-white">
+                      {booking?.agent?.name}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-xs text-blue-600 dark:text-blue-300">
-                      Phone
-                    </p>
-                    <p className="text-sm text-slate-700 dark:text-slate-300">
-                      {booking.agent.phone || "N/A"}
-                    </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-blue-600 dark:text-blue-300">
+                        Email
+                      </p>
+                      <p className="text-sm text-slate-700 dark:text-slate-300 break-all">
+                        {booking?.agent?.email}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-blue-600 dark:text-blue-300">
+                        Phone
+                      </p>
+                      <p className="text-sm text-slate-700 dark:text-slate-300">
+                        {booking?.agent?.phone || "N/A"}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Property Details */}
-            <div className="grid grid-cols-2 gap-4 pb-4 border-b border-slate-200 dark:border-slate-700">
-              <div>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Price
-                </p>
-                <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
-                  ${booking.property.price.toLocaleString()}
-                </p>
+              {/* Property Details */}
+              <div className="grid grid-cols-2 gap-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+                <div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Price
+                  </p>
+                  <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                    ${booking.property.price.toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Request Date
+                  </p>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                    {new Date(booking.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Request Date
-                </p>
-                <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                  {new Date(booking.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
 
-            {/* Booking Details */}
-            {booking.visitDate && (
-              <div>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Requested Visit Date
-                </p>
-                <p className="text-slate-900 dark:text-white">
-                  {new Date(booking.visitDate).toLocaleDateString()}
-                </p>
-              </div>
-            )}
-
-            {booking.message && (
-              <div>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Message
-                </p>
-                <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-700 p-3 rounded">
-                  {booking.message}
-                </p>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            {booking.status === "PENDING" && (
-              <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <Button
-                  onClick={() => handleStatusUpdate(booking.id, "APPROVED")}
-                  disabled={processingId === booking.id || isPending}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                >
-                  {processingId === booking.id && isPending ? (
-                    "Approving..."
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Approve
-                    </>
+              {/* Booking Details */}
+              {booking.visitDate && (
+                <div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Requested Visit Date
+                  </p>
+                  <p className="text-slate-900 dark:text-white">
+                    {new Date(booking.visitDate).toLocaleDateString()}
+                  </p>
+                  {booking.status === "PENDING" && countdown && (
+                    <p className="text-sm font-medium text-amber-600 dark:text-amber-400 mt-1">
+                      {countdown}
+                    </p>
                   )}
-                </Button>
-                <Button
-                  onClick={() => handleStatusUpdate(booking.id, "REJECTED")}
-                  disabled={processingId === booking.id || isPending}
-                  variant="destructive"
-                  className="flex-1"
-                >
-                  {processingId === booking.id && isPending ? (
-                    "Rejecting..."
-                  ) : (
-                    <>
-                      <XCircle className="w-4 h-4 mr-2" />
-                      Reject
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
+                </div>
+              )}
 
-            {booking.status !== "PENDING" && (
-              <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Status:{" "}
-                  <span className="font-semibold text-slate-900 dark:text-white">
-                    {booking.status}
-                  </span>
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ))}
+              {booking.message && (
+                <div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Message
+                  </p>
+                  <p className="text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-700 p-3 rounded">
+                    {booking.message}
+                  </p>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              {booking.status === "PENDING" && (
+                <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                  <Button
+                    onClick={() => handleStatusUpdate(booking.id, "APPROVED")}
+                    disabled={
+                      processingId === booking.id || isPending || !canApprove
+                    }
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    {processingId === booking.id && isPending ? (
+                      "Approving..."
+                    ) : !canApprove ? (
+                      (countdown ?? "Approve after visit date")
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Approve
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => handleStatusUpdate(booking.id, "REJECTED")}
+                    disabled={processingId === booking.id || isPending}
+                    variant="destructive"
+                    className="flex-1"
+                  >
+                    {processingId === booking.id && isPending ? (
+                      "Rejecting..."
+                    ) : (
+                      <>
+                        <XCircle className="w-4 h-4 mr-2" />
+                        Reject
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {booking.status !== "PENDING" && (
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Status:{" "}
+                    <span className="font-semibold text-slate-900 dark:text-white">
+                      {booking.status}
+                    </span>
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }

@@ -24,11 +24,6 @@ export const ProviderRoutes: Route[] = [
         url: "/agent-dashboard/my-bookings",
         icon: "Calendar",
       },
-      {
-        title: "Payment Settings",
-        url: "/agent-dashboard/payment-settings",
-        icon: "CreditCard",
-      },
     ],
   },
 ];

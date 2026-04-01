@@ -2,5 +2,5 @@ export const publicRoutes = [
   "/login",
   "/register",
   "/forgot-password",
-  "/become-provider",
+  "/become-agent",
 ];

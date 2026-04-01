@@ -4,14 +4,7 @@ import { ownerBookings } from "@/actions/properties";
 import { getAgentReviews } from "@/actions/review";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  BarChart3,
-  BookOpen,
-  Home,
-  MessageSquare,
-  Settings,
-  Star,
-} from "lucide-react";
+import { BarChart3, BookOpen, Home, MessageSquare, Star } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -23,6 +16,10 @@ interface BookingData {
 interface ReviewData {
   id: string;
   rating: number;
+  property?: {
+    id: string;
+    title: string;
+  };
 }
 
 export default function AgentDashboard() {
@@ -71,6 +68,44 @@ export default function AgentDashboard() {
           reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
         ).toFixed(1)
       : 0;
+
+  const propertyRatings = Object.values(
+    reviews.reduce(
+      (acc, review) => {
+        if (!review.property?.id) {
+          return acc;
+        }
+
+        const { id, title } = review.property;
+        if (!acc[id]) {
+          acc[id] = {
+            propertyId: id,
+            title,
+            totalRating: 0,
+            reviewCount: 0,
+          };
+        }
+
+        acc[id].totalRating += review.rating;
+        acc[id].reviewCount += 1;
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          propertyId: string;
+          title: string;
+          totalRating: number;
+          reviewCount: number;
+        }
+      >,
+    ),
+  )
+    .map((item) => ({
+      ...item,
+      averageRating: item.totalRating / item.reviewCount,
+    }))
+    .sort((a, b) => b.averageRating - a.averageRating);
 
   return (
     <div className="p-8 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 min-h-screen">
@@ -221,6 +256,46 @@ export default function AgentDashboard() {
           </div>
         </div>
 
+        {/* Property Ratings */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
+            Property Ratings
+          </h2>
+          <Card className="p-6 bg-white dark:bg-slate-800">
+            {loading ? (
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Loading property ratings...
+              </p>
+            ) : propertyRatings.length === 0 ? (
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                No ratings found for your properties yet.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {propertyRatings.map((item) => (
+                  <div
+                    key={item.propertyId}
+                    className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3 dark:border-slate-700"
+                  >
+                    <p className="font-medium text-slate-900 dark:text-white line-clamp-1">
+                      {item.title}
+                    </p>
+                    <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                      <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                      <span className="font-semibold">
+                        {item.averageRating.toFixed(1)} / 5
+                      </span>
+                      <span className="text-slate-500 dark:text-slate-400">
+                        ({item.reviewCount} reviews)
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+
         {/* Recent Activity */}
         <div>
           <div className="flex items-center justify-between mb-6">
@@ -229,22 +304,9 @@ export default function AgentDashboard() {
             </h2>
           </div>
           <Card className="p-6 bg-white dark:bg-slate-800">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-slate-900 dark:text-white mb-2">
-                  Payment Setting
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Booking fee payout settings and transaction history management
-                </p>
-              </div>
-              <Link href="/agent-dashboard/payment-settings">
-                <Button className="flex items-center gap-2">
-                  <Settings className="w-4 h-4" />
-                  Payment Settings
-                </Button>
-              </Link>
-            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              No additional dashboard settings available right now.
+            </p>
           </Card>
         </div>
       </div>

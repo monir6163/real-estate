@@ -227,3 +227,45 @@ export const updateBookingStatus = async (
     };
   }
 };
+
+// Cancel pending booking
+export const deleteBooking = async (bookingId: string) => {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+
+    const response = await fetch(
+      `${BACKEND_URL}/api/v1/bookings/${bookingId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: (await cookies()).toString(),
+        },
+      },
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Failed to delete booking");
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      message: data.message || "Booking cancelled successfully",
+    };
+  } catch (error) {
+    console.error("Error deleting booking:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+export const cancelBooking = async (bookingId: string) => {
+  return deleteBooking(bookingId);
+};

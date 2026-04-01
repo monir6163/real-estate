@@ -282,10 +282,10 @@ export default function UserDashboard() {
               </div>
               <div>
                 <p className="font-medium text-slate-900 dark:text-white">
-                  Pay Booking Fee
+                  Complete Property Payment
                 </p>
                 <p className="text-slate-600 dark:text-slate-400">
-                  Complete payment ($49.99) via Stripe to confirm your booking
+                  Complete payment via Stripe to confirm your booking
                 </p>
               </div>
             </div>

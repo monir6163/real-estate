@@ -1,6 +1,5 @@
 "use client";
 
-import { getPaymentSettings } from "@/actions/payments";
 import { getPropertyById } from "@/actions/properties";
 import BookPropertyModal from "@/components/BookPropertyModal";
 import ReviewForm from "@/components/ReviewForm";
@@ -15,7 +14,15 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { authClient } from "@/lib/auth-client";
 import {
   Bath,
   BedDouble,
@@ -23,7 +30,6 @@ import {
   Mail,
   MapPin,
   Maximize,
-  MessageCircle,
   Phone,
   Share2,
 } from "lucide-react";
@@ -53,6 +59,7 @@ interface PropertyData {
     id: string;
     name: string;
     email: string;
+    phone?: string;
     image?: string;
   };
   propertyImages?: Array<{
@@ -74,24 +81,21 @@ export default function PropertyDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const [bookingFeeAmount, setBookingFeeAmount] = useState<number>(49.99); // Default fallback
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showPhoneDialog, setShowPhoneDialog] = useState(false);
 
   useEffect(() => {
-    const fetchPaymentSettings = async () => {
+    const checkSession = async () => {
       try {
-        const result = await getPaymentSettings();
-        if (result.success && result.data) {
-          // Convert from cents to dollars if needed
-          const feeInDollars = result.data.bookingFeeAmount / 100;
-          setBookingFeeAmount(feeInDollars);
-        }
+        const session = await authClient.getSession();
+        setIsLoggedIn(!!session.data?.user);
       } catch (err) {
-        console.error("Failed to fetch booking fee:", err);
-        // Keep default fallback of 49.99
+        console.error("Failed to get session:", err);
+        setIsLoggedIn(false);
       }
     };
 
-    fetchPaymentSettings();
+    checkSession();
   }, []);
 
   useEffect(() => {
@@ -355,24 +359,51 @@ export default function PropertyDetailPage() {
           {/* Sidebar - Agent Info & Contact */}
           <div className="lg:col-span-1">
             {/* Booking Card */}
-            <Card className="p-6 mb-6 bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
+            <Card
+              className={`p-6 mb-6 bg-linear-to-br border-blue-200 dark:border-blue-800 ${
+                property.status === "SOLD"
+                  ? "from-red-50 to-red-100 dark:from-red-950 dark:to-red-900"
+                  : property.status === "RENTED"
+                    ? "from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900"
+                    : "from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900"
+              }`}
+            >
               <div className="mb-4">
                 <p className="text-sm text-slate-600 dark:text-slate-300 mb-1">
-                  Start Your Journey
+                  {property.status === "SOLD"
+                    ? "Property Status"
+                    : property.status === "RENTED"
+                      ? "Property Status"
+                      : "Start Your Journey"}
                 </p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {formatPrice(property.price)}
-                </p>
+                {property.status === "SOLD" || property.status === "RENTED" ? (
+                  <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                    {property.status === "SOLD"
+                      ? "Already Sold"
+                      : "Already Rented"}
+                  </p>
+                ) : (
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {formatPrice(property.price)}
+                  </p>
+                )}
               </div>
               <BookPropertyModal
                 propertyId={property.id}
                 propertyTitle={property.title}
                 propertyPrice={property.price}
                 agentId={property.agent?.id || ""}
+                isLoggedIn={isLoggedIn}
+                status={property.status}
               />
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-3 text-center">
-                Booking fee: ${bookingFeeAmount.toFixed(2)} (applied at
-                checkout)
+                {property.status === "SOLD" || property.status === "RENTED" ? (
+                  <span className="text-red-600 dark:text-red-400 font-semibold">
+                    This property is no longer available for booking
+                  </span>
+                ) : (
+                  <>Full property price will be charged at checkout</>
+                )}
               </p>
             </Card>
 
@@ -407,23 +438,25 @@ export default function PropertyDetailPage() {
 
                 {/* Contact Methods */}
                 <div className="space-y-3">
-                  <Button className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+                  <Button
+                    onClick={() => setShowPhoneDialog(true)}
+                    className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
                     <Phone className="w-4 h-4" />
                     Call Agent
                   </Button>
                   <Button
+                    onClick={() => {
+                      const subject = `Inquiry about ${property.title}`;
+                      const body = `Hi ${property.agent?.name},\n\nI am interested in learning more about this property.\n\nThank you!`;
+                      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${property.agent?.email}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                      window.open(gmailUrl, "_blank");
+                    }}
                     variant="outline"
                     className="w-full flex items-center justify-center gap-2"
                   >
                     <Mail className="w-4 h-4" />
                     Email
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full flex items-center justify-center gap-2"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    Message
                   </Button>
                 </div>
 
@@ -496,6 +529,73 @@ export default function PropertyDetailPage() {
           </Link>
         </div>
       </div>
+
+      {/* Call Agent Dialog */}
+      <Dialog open={showPhoneDialog} onOpenChange={setShowPhoneDialog}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Contact Agent</DialogTitle>
+            <DialogDescription>{property.agent?.name}</DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            {isLoggedIn ? (
+              <div className="space-y-4">
+                {property.agent?.phone ? (
+                  <>
+                    <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                        Agent's Phone Number:
+                      </p>
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {property.agent.phone}
+                      </p>
+                    </div>
+                    <Button
+                      asChild
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      <a href={`tel:${property.agent.phone}`}>
+                        <Phone className="w-4 h-4 mr-2" />
+                        Call Now
+                      </a>
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-slate-600 dark:text-slate-400">
+                    Phone number not available. Please use email to contact.
+                  </p>
+                )}
+                <Button
+                  onClick={() => {
+                    const subject = `Inquiry about ${property.title}`;
+                    const body = `Hi ${property.agent?.name},\n\nI am interested in learning more about this property.\n\nThank you!`;
+                    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${property.agent?.email}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                    window.open(gmailUrl, "_blank");
+                  }}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  Email Agent
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center space-y-4">
+                <p className="text-slate-600 dark:text-slate-400">
+                  Please log in to view the agent's contact information.
+                </p>
+                <Button
+                  asChild
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  <Link href="/login">Go to Login</Link>
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

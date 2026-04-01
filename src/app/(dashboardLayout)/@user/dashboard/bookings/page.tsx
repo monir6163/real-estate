@@ -1,10 +1,11 @@
 "use client";
-import { getMyBookings } from "@/actions/bookings";
+import { cancelBooking, getMyBookings } from "@/actions/bookings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar, MapPin, MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface Booking {
   id: string;
@@ -24,6 +25,7 @@ export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -45,6 +47,34 @@ export default function MyBookingsPage() {
 
     fetchBookings();
   }, []);
+
+  const handleCancelBooking = async (bookingId: string) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel this booking request?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setCancellingId(bookingId);
+      const result = await cancelBooking(bookingId);
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to cancel booking");
+      }
+
+      setBookings((prev) => prev.filter((booking) => booking.id !== bookingId));
+      toast.success(result.message || "Booking cancelled successfully");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to cancel booking",
+      );
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -151,6 +181,18 @@ export default function MyBookingsPage() {
                     View Property
                   </a>
                 </Button>
+                {booking.status === "PENDING" && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleCancelBooking(booking.id)}
+                    disabled={cancellingId === booking.id}
+                  >
+                    {cancellingId === booking.id
+                      ? "Cancelling..."
+                      : "Cancel Booking"}
+                  </Button>
+                )}
               </div>
             </Card>
           ))}

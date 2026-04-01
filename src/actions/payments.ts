@@ -11,17 +11,13 @@ interface CheckoutSessionResponse {
   };
 }
 
-interface PaymentSettings {
-  id: string;
-  bookingFeeAmount: number;
-  premiumListingFeeAmount: number;
-  currency: string;
-}
-
-interface PaymentSettingsResponse {
+interface ConfirmCheckoutSessionResponse {
   success: boolean;
   message: string;
-  data: PaymentSettings;
+  data: {
+    sessionId: string;
+    paymentStatus: string;
+  };
 }
 
 interface PaymentResponse {
@@ -42,7 +38,11 @@ interface PaymentsApiResponse {
 }
 
 // Create booking checkout session (call this for payment)
-export const createBookingCheckout = async (bookingId: string) => {
+export const createBookingCheckout = async (payload: {
+  propertyId: string;
+  visitDate: string;
+  message?: string;
+}) => {
   try {
     const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
     if (!BACKEND_URL) {
@@ -51,13 +51,17 @@ export const createBookingCheckout = async (bookingId: string) => {
     const cookieStore = await cookies();
 
     const response = await fetch(
-      `${BACKEND_URL}/api/v1/payments/checkout/booking/${bookingId}`,
+      `${BACKEND_URL}/api/v1/payments/checkout/booking`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Cookie: cookieStore.toString(),
         },
+        body: JSON.stringify({
+          ...payload,
+          visitDate: new Date(payload.visitDate).toISOString(),
+        }),
       },
     );
 
@@ -73,6 +77,53 @@ export const createBookingCheckout = async (bookingId: string) => {
     };
   } catch (error) {
     console.error("Error creating checkout session:", error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+export const confirmCheckoutSession = async (sessionId: string) => {
+  try {
+    if (!sessionId) {
+      throw new Error("Session id is required");
+    }
+
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+
+    const cookieStore = await cookies();
+
+    const response = await fetch(
+      `${BACKEND_URL}/api/v1/payments/checkout/confirm/${sessionId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: cookieStore.toString(),
+        },
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      throw new Error(error?.message || "Failed to confirm payment session");
+    }
+
+    const data: ConfirmCheckoutSessionResponse = await response.json();
+
+    return {
+      success: true,
+      data: data.data,
+      error: null,
+    };
+  } catch (error) {
+    console.error("Error confirming checkout session:", error);
     return {
       success: false,
       data: null,
@@ -112,91 +163,6 @@ export const getMyPayments = async () => {
     return {
       success: false,
       data: [],
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
-};
-
-// Get payment settings (booking fee, etc)
-export const getPaymentSettings = async () => {
-  try {
-    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
-    if (!BACKEND_URL) {
-      throw new Error("API URL not configured");
-    }
-    const cookieStore = await cookies();
-
-    const response = await fetch(`${BACKEND_URL}/api/v1/payments/settings`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: cookieStore.toString(),
-      },
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch payment settings");
-    }
-
-    const data: PaymentSettingsResponse = await response.json();
-    return {
-      success: true,
-      data: data.data,
-    };
-  } catch (error) {
-    console.error("Error fetching payment settings:", error);
-    return {
-      success: false,
-      data: null,
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
-};
-
-// Update payment settings
-export const updatePaymentSettings = async (
-  bookingFeeAmount: number,
-  premiumListingFeeAmount: number,
-  currency: string,
-) => {
-  try {
-    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
-    if (!BACKEND_URL) {
-      throw new Error("API URL not configured");
-    }
-    const cookieStore = await cookies();
-
-    const response = await fetch(`${BACKEND_URL}/api/v1/payments/settings`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: cookieStore.toString(),
-      },
-      body: JSON.stringify({
-        bookingFeeAmount,
-        premiumListingFeeAmount,
-        currency,
-      }),
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Failed to update payment settings");
-    }
-
-    const data: PaymentSettingsResponse = await response.json();
-    return {
-      success: true,
-      data: data.data,
-      message: "Payment settings updated successfully",
-    };
-  } catch (error) {
-    console.error("Error updating payment settings:", error);
-    return {
-      success: false,
-      data: null,
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }
