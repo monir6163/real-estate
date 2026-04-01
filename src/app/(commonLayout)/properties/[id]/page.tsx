@@ -316,7 +316,7 @@ export default function PropertyDetailPage() {
                   </p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                  <p className="text-base font-bold text-blue-600 dark:text-blue-400 mb-2 wrap-break-word leading-tight">
                     {formatPrice(property.price)}
                   </p>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
