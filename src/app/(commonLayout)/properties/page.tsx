@@ -15,6 +15,18 @@ import { Property } from "@/lib/demo-data";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
+interface PropertyFilters {
+  search: string;
+  minPrice: number | "";
+  maxPrice: number | "";
+  bedrooms: number | "";
+  bathrooms: number | "";
+  location: string;
+  type?: string;
+  listingType?: string;
+  sortOrder?: string;
+}
+
 export default function PropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,8 +42,20 @@ export default function PropertiesPage() {
   const [bedrooms, setBedrooms] = useState<number | "">("");
   const [bathrooms, setBathrooms] = useState<number | "">("");
   const [location, setLocation] = useState("");
-  const [sortBy, setSortBy] = useState("createdAt");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [propertyType, setPropertyType] = useState("");
+  const [listingType, setListingType] = useState("");
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [appliedFilters, setAppliedFilters] = useState<PropertyFilters>({
+    search: "",
+    minPrice: "",
+    maxPrice: "",
+    bedrooms: "",
+    bathrooms: "",
+    location: "",
+    type: "",
+    listingType: "",
+    sortOrder: "desc",
+  });
 
   // Fetch properties
   const fetchProperties = async () => {
@@ -42,27 +66,33 @@ export default function PropertiesPage() {
       const filters: any = {
         page: currentPage,
         limit: 12,
-        sortBy,
-        sortOrder,
+        sortBy: "createdAt",
+        sortOrder: appliedFilters.sortOrder || "desc",
       };
 
-      if (searchQuery.trim()) {
-        filters.search = searchQuery.trim();
+      if (appliedFilters.search.trim()) {
+        filters.search = appliedFilters.search.trim();
       }
-      if (minPrice !== "") {
-        filters.minPrice = minPrice;
+      if (appliedFilters.minPrice !== "") {
+        filters.minPrice = appliedFilters.minPrice;
       }
-      if (maxPrice !== "") {
-        filters.maxPrice = maxPrice;
+      if (appliedFilters.maxPrice !== "") {
+        filters.maxPrice = appliedFilters.maxPrice;
       }
-      if (bedrooms !== "") {
-        filters.bedrooms = bedrooms;
+      if (appliedFilters.bedrooms !== "") {
+        filters.bedrooms = appliedFilters.bedrooms;
       }
-      if (bathrooms !== "") {
-        filters.bathrooms = bathrooms;
+      if (appliedFilters.bathrooms !== "") {
+        filters.bathrooms = appliedFilters.bathrooms;
       }
-      if (location.trim()) {
-        filters.location = location.trim();
+      if (appliedFilters.location.trim()) {
+        filters.location = appliedFilters.location.trim();
+      }
+      if (appliedFilters.type) {
+        filters.type = appliedFilters.type;
+      }
+      if (appliedFilters.listingType) {
+        filters.listingType = appliedFilters.listingType;
       }
 
       const result = await getAllProperties(filters);
@@ -124,21 +154,22 @@ export default function PropertiesPage() {
 
   useEffect(() => {
     fetchProperties();
-  }, [
-    currentPage,
-    searchQuery,
-    minPrice,
-    maxPrice,
-    bedrooms,
-    bathrooms,
-    location,
-    sortBy,
-    sortOrder,
-  ]);
+  }, [currentPage, appliedFilters]);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setCurrentPage(1); // Reset to first page on search
+    setAppliedFilters({
+      search: searchQuery,
+      minPrice,
+      maxPrice,
+      bedrooms,
+      bathrooms,
+      location,
+      type: propertyType,
+      listingType,
+      sortOrder,
+    });
+    setCurrentPage(1); // Reset to first page on apply
   };
 
   const handleReset = () => {
@@ -148,19 +179,34 @@ export default function PropertiesPage() {
     setBedrooms("");
     setBathrooms("");
     setLocation("");
-    setSortBy("createdAt");
+    setPropertyType("");
+    setListingType("");
     setSortOrder("desc");
+    setAppliedFilters({
+      search: "",
+      minPrice: "",
+      maxPrice: "",
+      bedrooms: "",
+      bathrooms: "",
+      location: "",
+      type: "",
+      listingType: "",
+      sortOrder: "desc",
+    });
     setCurrentPage(1);
   };
 
   // Check if any filters are applied
   const hasActiveFilters =
-    searchQuery !== "" ||
-    minPrice !== "" ||
-    maxPrice !== "" ||
-    bedrooms !== "" ||
-    bathrooms !== "" ||
-    location !== "";
+    appliedFilters.search !== "" ||
+    appliedFilters.minPrice !== "" ||
+    appliedFilters.maxPrice !== "" ||
+    appliedFilters.bedrooms !== "" ||
+    appliedFilters.bathrooms !== "" ||
+    appliedFilters.location !== "" ||
+    appliedFilters.type !== "" ||
+    appliedFilters.listingType !== "" ||
+    appliedFilters.sortOrder !== "desc";
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
@@ -282,8 +328,8 @@ export default function PropertiesPage() {
               </div>
             </div>
 
-            {/* Location & Sorting Section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Location & Type Section */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
                   Location
@@ -299,32 +345,43 @@ export default function PropertiesPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
-                  Sort By
+                  Property Type
                 </label>
-                <Select value={sortBy} onValueChange={setSortBy}>
+                <Select value={propertyType} onValueChange={setPropertyType}>
                   <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select sort option" />
+                    <SelectValue placeholder="All Types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="createdAt">Newest First</SelectItem>
-                    <SelectItem value="price">Price: Low to High</SelectItem>
-                    <SelectItem value="title">Title: A to Z</SelectItem>
+                    <SelectItem value="APARTMENT">Apartment</SelectItem>
+                    <SelectItem value="HOUSE">House</SelectItem>
+                    <SelectItem value="COMMERCIAL">Commercial</SelectItem>
+                    <SelectItem value="LAND">Land</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
-                  Order
+                  Listing Type
                 </label>
-                <Select
-                  value={sortOrder}
-                  onValueChange={(value) =>
-                    setSortOrder(value as "asc" | "desc")
-                  }
-                >
+                <Select value={listingType} onValueChange={setListingType}>
                   <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select order" />
+                    <SelectValue placeholder="All Listings" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="RENT">For Rent</SelectItem>
+                    <SelectItem value="SALE">For Sale</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
+                  Sort Order
+                </label>
+                <Select value={sortOrder} onValueChange={setSortOrder}>
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Descending" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="desc">Descending</SelectItem>

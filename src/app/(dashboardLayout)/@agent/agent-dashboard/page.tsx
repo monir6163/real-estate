@@ -4,13 +4,36 @@ import { ownerBookings } from "@/actions/properties";
 import { getAgentReviews } from "@/actions/review";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BarChart3, BookOpen, Home, MessageSquare, Star } from "lucide-react";
+import {
+  BarChart3,
+  BookOpen,
+  CircleDollarSign,
+  Home,
+  MessageSquare,
+  Star,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import {
+  Bar,
+  BarChart,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 interface BookingData {
   id: string;
   status: string;
+  createdAt?: string;
+  payment?: {
+    status?: string;
+    amount?: number;
+  };
 }
 
 interface ReviewData {
@@ -68,6 +91,20 @@ export default function AgentDashboard() {
           reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
         ).toFixed(1)
       : 0;
+  const totalEarnings = bookings.reduce((sum, booking) => {
+    const isSuccessfulPayment =
+      booking.payment?.status?.toUpperCase() === "SUCCESS";
+    const amount = Number(booking.payment?.amount || 0);
+    if (!isSuccessfulPayment || !Number.isFinite(amount) || amount <= 0) {
+      return sum;
+    }
+    return sum + amount;
+  }, 0);
+  const formattedTotalEarnings = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  }).format(totalEarnings);
 
   const propertyRatings = Object.values(
     reviews.reduce(
@@ -107,6 +144,57 @@ export default function AgentDashboard() {
     }))
     .sort((a, b) => b.averageRating - a.averageRating);
 
+  const statusCounts = bookings.reduce(
+    (acc, booking) => {
+      const status = booking.status?.toLowerCase();
+      if (status in acc) {
+        acc[status as keyof typeof acc] += 1;
+      }
+      return acc;
+    },
+    {
+      pending: 0,
+      approved: 0,
+      rejected: 0,
+      cancellation_requested: 0,
+      cancelled: 0,
+    },
+  );
+
+  const bookingStatusData = [
+    {
+      name: "Pending",
+      value: statusCounts.pending,
+      color: "#3b82f6",
+    },
+    {
+      name: "Approved",
+      value: statusCounts.approved,
+      color: "#16a34a",
+    },
+    {
+      name: "Rejected",
+      value: statusCounts.rejected,
+      color: "#ef4444",
+    },
+    {
+      name: "Cancel Requested",
+      value: statusCounts.cancellation_requested,
+      color: "#f59e0b",
+    },
+    {
+      name: "Cancelled",
+      value: statusCounts.cancelled,
+      color: "#64748b",
+    },
+  ].filter((item) => item.value > 0);
+
+  const ratingDistributionData = [1, 2, 3, 4, 5].map((rating) => ({
+    rating: `${rating}★`,
+    count: reviews.filter((review) => Math.round(review.rating) === rating)
+      .length,
+  }));
+
   return (
     <div className="p-8 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 min-h-screen">
       <div className="max-w-6xl mx-auto">
@@ -127,7 +215,7 @@ export default function AgentDashboard() {
         )}
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-12">
           <Card className="p-6 bg-white dark:bg-slate-800">
             <div className="flex items-center justify-between">
               <div>
@@ -181,6 +269,20 @@ export default function AgentDashboard() {
                 </p>
               </div>
               <Star className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+            </div>
+          </Card>
+
+          <Card className="p-6 bg-white dark:bg-slate-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">
+                  Total Earnings
+                </p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white break-all">
+                  {loading ? "-" : formattedTotalEarnings}
+                </p>
+              </div>
+              <CircleDollarSign className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
             </div>
           </Card>
         </div>
@@ -254,6 +356,70 @@ export default function AgentDashboard() {
               </Card>
             </Link>
           </div>
+        </div>
+
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+          <Card className="p-6 bg-white dark:bg-slate-800">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+              Booking Status Breakdown
+            </h2>
+            {loading ? (
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Loading chart data...
+              </p>
+            ) : bookingStatusData.length === 0 ? (
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                No bookings yet to visualize.
+              </p>
+            ) : (
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={bookingStatusData}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={55}
+                      outerRadius={95}
+                      paddingAngle={4}
+                    >
+                      {bookingStatusData.map((entry) => (
+                        <Cell key={entry.name} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </Card>
+
+          <Card className="p-6 bg-white dark:bg-slate-800">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+              Rating Distribution
+            </h2>
+            {loading ? (
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Loading chart data...
+              </p>
+            ) : reviews.length === 0 ? (
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                No reviews yet to visualize.
+              </p>
+            ) : (
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={ratingDistributionData}>
+                    <XAxis dataKey="rating" />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </Card>
         </div>
 
         {/* Property Ratings */}

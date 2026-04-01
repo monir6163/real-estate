@@ -132,6 +132,44 @@ export const getUserReviews = async () => {
   }
 };
 
+export const getAllReviews = async () => {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+
+    const cookieStore = await cookies();
+    const response = await fetch(`${BACKEND_URL}/api/v1/reviews`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieStore.toString(),
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch reviews");
+    }
+
+    const result = await response.json();
+    const reviewsWithUser = (result.data || []).map((review: any) => ({
+      ...review,
+      user: review.user || review.agent || review.reviewer || undefined,
+    }));
+
+    return { data: reviewsWithUser, error: null, status: true };
+  } catch (error) {
+    console.log(error);
+    return {
+      data: null,
+      message: "Failed to fetch reviews",
+      status: false,
+    };
+  }
+};
+
 export const submitReview = async (
   propertyId: string,
   rating: number,

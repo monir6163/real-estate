@@ -24,6 +24,16 @@ export const ProviderRoutes: Route[] = [
         url: "/agent-dashboard/my-bookings",
         icon: "Calendar",
       },
+      {
+        title: "Reviews",
+        url: "/agent-dashboard/reviews",
+        icon: "Star",
+      },
+      {
+        title: "Profile",
+        url: "/agent-dashboard/profile",
+        icon: "User",
+      },
     ],
   },
 ];

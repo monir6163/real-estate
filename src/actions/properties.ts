@@ -13,6 +13,8 @@ interface PropertiesFilter {
   bedrooms?: number;
   bathrooms?: number;
   location?: string;
+  type?: "APARTMENT" | "HOUSE" | "COMMERCIAL" | "LAND";
+  listingType?: "RENT" | "SALE";
 }
 
 interface PropertyResponse {
@@ -75,15 +77,17 @@ export const getAllProperties = async (filters?: PropertiesFilter) => {
     if (filters?.search) params.append("searchTerm", filters.search);
     if (filters?.sortBy) params.append("sortBy", filters.sortBy);
     if (filters?.sortOrder) params.append("sortOrder", filters.sortOrder);
-    if (filters?.minPrice)
+    if (filters?.minPrice !== undefined)
       params.append("price[gte]", filters.minPrice.toString());
-    if (filters?.maxPrice)
+    if (filters?.maxPrice !== undefined)
       params.append("price[lte]", filters.maxPrice.toString());
-    if (filters?.bedrooms)
+    if (filters?.bedrooms !== undefined)
       params.append("bedrooms", filters.bedrooms.toString());
-    if (filters?.bathrooms)
+    if (filters?.bathrooms !== undefined)
       params.append("bathrooms", filters.bathrooms.toString());
     if (filters?.location) params.append("location", filters.location);
+    if (filters?.type) params.append("type", filters.type);
+    if (filters?.listingType) params.append("listingType", filters.listingType);
 
     const url = `${BACKEND_URL}/api/v1/properties${params.toString() ? "?" + params.toString() : ""}`;
 
@@ -171,15 +175,16 @@ export const getFeaturedProperties = async (filters?: PropertiesFilter) => {
     if (filters?.search) params.append("searchTerm", filters.search);
     if (filters?.sortBy) params.append("sortBy", filters.sortBy);
     if (filters?.sortOrder) params.append("sortOrder", filters.sortOrder);
-    if (filters?.minPrice)
+    if (filters?.minPrice !== undefined)
       params.append("price[gte]", filters.minPrice.toString());
-    if (filters?.maxPrice)
+    if (filters?.maxPrice !== undefined)
       params.append("price[lte]", filters.maxPrice.toString());
-    if (filters?.bedrooms)
+    if (filters?.bedrooms !== undefined)
       params.append("bedrooms", filters.bedrooms.toString());
-    if (filters?.bathrooms)
+    if (filters?.bathrooms !== undefined)
       params.append("bathrooms", filters.bathrooms.toString());
     if (filters?.location) params.append("location", filters.location);
+    if (filters?.type) params.append("type", filters.type);
 
     const url = `${BACKEND_URL}/api/v1/properties/featured${
       params.toString() ? "?" + params.toString() : ""
@@ -217,6 +222,38 @@ export const getFeaturedProperties = async (filters?: PropertiesFilter) => {
         totalPages: 0,
       },
       error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+export const getPropertyTypeCounts = async () => {
+  try {
+    const [apartment, house, commercial, land] = await Promise.all([
+      getAllProperties({ page: 1, limit: 1, type: "APARTMENT" }),
+      getAllProperties({ page: 1, limit: 1, type: "HOUSE" }),
+      getAllProperties({ page: 1, limit: 1, type: "COMMERCIAL" }),
+      getAllProperties({ page: 1, limit: 1, type: "LAND" }),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        APARTMENT: apartment.success ? apartment.meta.total : 0,
+        HOUSE: house.success ? house.meta.total : 0,
+        COMMERCIAL: commercial.success ? commercial.meta.total : 0,
+        LAND: land.success ? land.meta.total : 0,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching property type counts:", error);
+    return {
+      success: false,
+      data: {
+        APARTMENT: 0,
+        HOUSE: 0,
+        COMMERCIAL: 0,
+        LAND: 0,
+      },
     };
   }
 };
