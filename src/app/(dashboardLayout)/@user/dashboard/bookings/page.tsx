@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getErrorMessage } from "@/lib/error-message";
 import { Calendar, MapPin, MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -83,10 +84,12 @@ export default function MyBookingsPage() {
         if (result.success) {
           setBookings(result.data);
         } else {
-          setError(result.error || "Failed to load bookings");
+          setError(result.error || "Could not load your bookings right now.");
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+        setError(
+          getErrorMessage(err, "Could not load your bookings right now."),
+        );
       } finally {
         setLoading(false);
       }
@@ -115,7 +118,10 @@ export default function MyBookingsPage() {
       const result = await cancelBooking(bookingId);
 
       if (!result.success) {
-        throw new Error(result.error || "Failed to cancel booking");
+        throw new Error(
+          result.error ||
+            "Could not process booking cancellation. Please try again.",
+        );
       }
 
       const refreshed = await getMyBookings();
@@ -127,7 +133,10 @@ export default function MyBookingsPage() {
       );
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to cancel booking",
+        getErrorMessage(
+          err,
+          "Could not process booking cancellation. Please try again.",
+        ),
       );
     } finally {
       setCancellingId(null);

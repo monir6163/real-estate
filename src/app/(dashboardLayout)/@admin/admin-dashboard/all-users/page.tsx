@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ROLES } from "@/constants/Roles";
 import { UserStatus, UserStatusColors } from "@/constants/UserStatus";
+import { getErrorMessage } from "@/lib/error-message";
 import {
   AlertCircle,
   ArrowLeft,
@@ -58,10 +59,10 @@ export default function AllUsersPage() {
         setUsers(usersData);
         setFilteredUsers(usersData);
       } else {
-        setError(result.message || "Failed to load users");
+        setError(result.message || "Could not load users right now.");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load users");
+      setError(getErrorMessage(err, "Could not load users right now."));
     } finally {
       setLoading(false);
     }
@@ -83,11 +84,13 @@ export default function AllUsersPage() {
         // Refetch users to get fresh data
         await fetchUsers();
       } else {
-        toast.error(result.message || "Failed to update user status");
+        toast.error(
+          result.message || "Could not update user status. Please try again.",
+        );
       }
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to update user status",
+        getErrorMessage(err, "Could not update user status. Please try again."),
       );
     } finally {
       setUpdatingUserId(null);

@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getErrorMessage } from "@/lib/error-message";
 import { User } from "@/types";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -46,12 +47,14 @@ export default function ProfileForm({ user }: ProfileFormProps) {
         // Refresh the page to show updated data
         window.location.reload();
       } else {
-        throw new Error(result.message || "Failed to update profile");
+        throw new Error(
+          result.message || "Could not update profile. Please try again.",
+        );
       }
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to update profile",
+        getErrorMessage(error, "Could not update profile. Please try again."),
       );
     } finally {
       setIsLoading(false);

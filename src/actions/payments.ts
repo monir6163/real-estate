@@ -1,5 +1,6 @@
 "use server";
 
+import { getErrorMessage, parseApiErrorMessage } from "@/lib/error-message";
 import { cookies } from "next/headers";
 
 interface CheckoutSessionResponse {
@@ -66,8 +67,12 @@ export const createBookingCheckout = async (payload: {
     );
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Failed to create checkout session");
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not start payment checkout. Please try again.",
+        ),
+      );
     }
 
     const data: CheckoutSessionResponse = await response.json();
@@ -80,7 +85,10 @@ export const createBookingCheckout = async (payload: {
     return {
       success: false,
       data: null,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: getErrorMessage(
+        error,
+        "Could not start payment checkout. Please try again.",
+      ),
     };
   }
 };
@@ -111,8 +119,12 @@ export const confirmCheckoutSession = async (sessionId: string) => {
     );
 
     if (!response.ok) {
-      const error = await response.json().catch(() => null);
-      throw new Error(error?.message || "Failed to confirm payment session");
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not confirm payment. Please refresh and try again.",
+        ),
+      );
     }
 
     const data: ConfirmCheckoutSessionResponse = await response.json();
@@ -127,7 +139,10 @@ export const confirmCheckoutSession = async (sessionId: string) => {
     return {
       success: false,
       data: null,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: getErrorMessage(
+        error,
+        "Could not confirm payment. Please refresh and try again.",
+      ),
     };
   }
 };
@@ -150,7 +165,12 @@ export const getMyPayments = async () => {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch payments");
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not load your payments right now.",
+        ),
+      );
     }
 
     const data: PaymentsApiResponse = await response.json();
@@ -163,7 +183,7 @@ export const getMyPayments = async () => {
     return {
       success: false,
       data: [],
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: getErrorMessage(error, "Could not load your payments right now."),
     };
   }
 };

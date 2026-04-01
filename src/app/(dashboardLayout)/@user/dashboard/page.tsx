@@ -4,6 +4,7 @@ import { getMyBookings } from "@/actions/bookings";
 import { getMyPayments } from "@/actions/payments";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { getErrorMessage } from "@/lib/error-message";
 import { BookOpen, CreditCard, Heart, Home, Settings } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -46,7 +47,9 @@ export default function UserDashboard() {
           setPayments(paymentsResult.data || []);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load data");
+        setError(
+          getErrorMessage(err, "Could not load dashboard data right now."),
+        );
       } finally {
         setLoading(false);
       }

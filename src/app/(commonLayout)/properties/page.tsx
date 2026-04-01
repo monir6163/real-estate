@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Property } from "@/lib/demo-data";
+import { getErrorMessage } from "@/lib/error-message";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -143,10 +144,10 @@ export default function PropertiesPage() {
         setTotalPages(result.meta.totalPages);
         setTotalProperties(result.meta.total);
       } else {
-        setError(result.error || "Failed to fetch properties");
+        setError(result.error || "Could not load properties right now.");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(getErrorMessage(err, "Could not load properties right now."));
     } finally {
       setLoading(false);
     }

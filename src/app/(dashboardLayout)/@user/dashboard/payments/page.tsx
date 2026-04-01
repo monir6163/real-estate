@@ -3,6 +3,7 @@ import { getMyPayments } from "@/actions/payments";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getErrorMessage } from "@/lib/error-message";
 import { AlertCircle, CheckCircle, CreditCard } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -30,10 +31,17 @@ export default function PaymentHistoryPage() {
         if (result.success) {
           setPayments(result.data);
         } else {
-          setError(result.error || "Failed to load payments");
+          setError(
+            result.error || "Could not load your payment history right now.",
+          );
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+        setError(
+          getErrorMessage(
+            err,
+            "Could not load your payment history right now.",
+          ),
+        );
       } finally {
         setLoading(false);
       }

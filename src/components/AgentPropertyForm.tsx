@@ -19,25 +19,60 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { defaultPropertyValues } from "@/schema/propertySchema";
+import { getErrorMessage } from "@/lib/error-message";
+import {
+  createPropertySchema,
+  defaultPropertyValues,
+} from "@/schema/propertySchema";
 import { useForm } from "@tanstack/react-form";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+
+// Helper function to validate a single field with Zod schema
+const validateField = (fieldName: string, value: any) => {
+  try {
+    const fieldSchema = createPropertySchema.pick({ [fieldName]: true } as any);
+    fieldSchema.parse({ [fieldName]: value });
+    return undefined;
+  } catch (error: any) {
+    const issues = error?.issues || error?.errors;
+
+    if (issues && issues.length > 0) {
+      return issues[0].message;
+    }
+
+    return "Invalid value";
+  }
+};
 export default function CreatePropertyForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm({
     defaultValues: defaultPropertyValues,
     onSubmit: async ({ value }: { value: any }) => {
-      console.log(value);
       try {
         setIsLoading(true);
 
-        // Validate required fields
-        if (!value.thumbnail || !(value.thumbnail instanceof File)) {
+        // Validate thumbnail exists
+        if (!value.thumbnail) {
           throw new Error("Thumbnail image is required");
+        }
+
+        const imageFiles: File[] = value.propertyImages || [];
+        const totalUploadBytes =
+          (value.thumbnail?.size || 0) +
+          imageFiles.reduce(
+            (sum: number, file: File) => sum + (file?.size || 0),
+            0,
+          );
+
+        if (totalUploadBytes > MAX_UPLOAD_BYTES) {
+          throw new Error(
+            "Total image size is too large. Keep thumbnail + images under 4MB.",
+          );
         }
 
         // Create FormData for multipart upload
@@ -66,8 +101,8 @@ export default function CreatePropertyForm() {
         formData.append("thumbnail", value.thumbnail);
 
         // Add property images
-        if (value.propertyImages && value.propertyImages.length > 0) {
-          value.propertyImages.forEach((imageFile: File) => {
+        if (imageFiles.length > 0) {
+          imageFiles.forEach((imageFile: File) => {
             formData.append("images", imageFile);
           });
         }
@@ -84,7 +119,10 @@ export default function CreatePropertyForm() {
       } catch (error) {
         console.error("Error creating property:", error);
         toast.error(
-          error instanceof Error ? error.message : "Failed to create property",
+          getErrorMessage(
+            error,
+            "Could not create property. Please check the form and try again.",
+          ),
         );
       } finally {
         setIsLoading(false);
@@ -92,14 +130,19 @@ export default function CreatePropertyForm() {
     },
   });
 
-  const renderFieldError = (errors: any[] | undefined) => {
-    if (!errors || !errors.length) return null;
-    const message = errors[0]?.message;
-    if (!message) return null;
+  const renderFieldError = (fieldMeta: any) => {
+    const errors = fieldMeta?.errors;
+    if (!errors || errors.length === 0) return null;
+
+    const message =
+      typeof errors[0] === "string"
+        ? errors[0]
+        : errors[0]?.message || "Invalid input";
+
     return (
-      <div className="flex items-center gap-2 text-red-500 text-sm">
-        <AlertCircle className="w-4 h-4" />
-        {message}
+      <div className="mt-2 flex items-center gap-2 text-red-500 text-sm font-medium">
+        <AlertCircle className="w-4 h-4 flex-shrink-0" />
+        <span>{message}</span>
       </div>
     );
   };
@@ -134,6 +177,10 @@ export default function CreatePropertyForm() {
               {/* Title */}
               <form.Field
                 name="title"
+                validators={{
+                  onBlur: ({ value }: { value: any }) =>
+                    validateField("title", value),
+                }}
                 children={(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid;
@@ -145,9 +192,10 @@ export default function CreatePropertyForm() {
                         placeholder="e.g., Beautiful 3-Bedroom Apartment in Downtown"
                         value={field.state.value}
                         onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
                         className={isInvalid ? "border-red-500" : ""}
                       />
-                      {isInvalid && renderFieldError(field.state.meta.errors)}
+                      {isInvalid && renderFieldError(field.state.meta)}
                     </div>
                   );
                 }}
@@ -156,6 +204,10 @@ export default function CreatePropertyForm() {
               {/* Description */}
               <form.Field
                 name="description"
+                validators={{
+                  onBlur: ({ value }: { value: any }) =>
+                    validateField("description", value),
+                }}
                 children={(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid;
@@ -168,9 +220,10 @@ export default function CreatePropertyForm() {
                         rows={5}
                         value={field.state.value}
                         onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
                         className={isInvalid ? "border-red-500" : ""}
                       />
-                      {isInvalid && renderFieldError(field.state.meta.errors)}
+                      {isInvalid && renderFieldError(field.state.meta)}
                     </div>
                   );
                 }}
@@ -180,6 +233,10 @@ export default function CreatePropertyForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <form.Field
                   name="location"
+                  validators={{
+                    onBlur: ({ value }: { value: any }) =>
+                      validateField("location", value),
+                  }}
                   children={(field) => {
                     const isInvalid =
                       field.state.meta.isTouched && !field.state.meta.isValid;
@@ -191,9 +248,10 @@ export default function CreatePropertyForm() {
                           placeholder="e.g., Dhaka, New York"
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
+                          onBlur={field.handleBlur}
                           className={isInvalid ? "border-red-500" : ""}
                         />
-                        {isInvalid && renderFieldError(field.state.meta.errors)}
+                        {isInvalid && renderFieldError(field.state.meta)}
                       </div>
                     );
                   }}
@@ -219,6 +277,10 @@ export default function CreatePropertyForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <form.Field
                   name="price"
+                  validators={{
+                    onBlur: ({ value }: { value: any }) =>
+                      validateField("price", value),
+                  }}
                   children={(field) => {
                     const isInvalid =
                       field.state.meta.isTouched && !field.state.meta.isValid;
@@ -240,9 +302,10 @@ export default function CreatePropertyForm() {
                           onChange={(e) =>
                             field.handleChange(parseFloat(e.target.value) || 0)
                           }
+                          onBlur={field.handleBlur}
                           className={isInvalid ? "border-red-500" : ""}
                         />
-                        {isInvalid && renderFieldError(field.state.meta.errors)}
+                        {isInvalid && renderFieldError(field.state.meta)}
                       </div>
                     );
                   }}
@@ -250,6 +313,10 @@ export default function CreatePropertyForm() {
 
                 <form.Field
                   name="area"
+                  validators={{
+                    onBlur: ({ value }: { value: any }) =>
+                      validateField("area", value),
+                  }}
                   children={(field) => {
                     const isInvalid =
                       field.state.meta.isTouched && !field.state.meta.isValid;
@@ -265,9 +332,10 @@ export default function CreatePropertyForm() {
                           onChange={(e) =>
                             field.handleChange(parseFloat(e.target.value) || 0)
                           }
+                          onBlur={field.handleBlur}
                           className={isInvalid ? "border-red-500" : ""}
                         />
-                        {isInvalid && renderFieldError(field.state.meta.errors)}
+                        {isInvalid && renderFieldError(field.state.meta)}
                       </div>
                     );
                   }}
@@ -278,6 +346,10 @@ export default function CreatePropertyForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <form.Field
                   name="bedrooms"
+                  validators={{
+                    onBlur: ({ value }: { value: any }) =>
+                      validateField("bedrooms", value),
+                  }}
                   children={(field) => {
                     const isInvalid =
                       field.state.meta.isTouched && !field.state.meta.isValid;
@@ -292,9 +364,10 @@ export default function CreatePropertyForm() {
                           onChange={(e) =>
                             field.handleChange(parseInt(e.target.value) || 0)
                           }
+                          onBlur={field.handleBlur}
                           className={isInvalid ? "border-red-500" : ""}
                         />
-                        {isInvalid && renderFieldError(field.state.meta.errors)}
+                        {isInvalid && renderFieldError(field.state.meta)}
                       </div>
                     );
                   }}
@@ -302,6 +375,10 @@ export default function CreatePropertyForm() {
 
                 <form.Field
                   name="bathrooms"
+                  validators={{
+                    onBlur: ({ value }: { value: any }) =>
+                      validateField("bathrooms", value),
+                  }}
                   children={(field) => {
                     const isInvalid =
                       field.state.meta.isTouched && !field.state.meta.isValid;
@@ -316,9 +393,10 @@ export default function CreatePropertyForm() {
                           onChange={(e) =>
                             field.handleChange(parseInt(e.target.value) || 0)
                           }
+                          onBlur={field.handleBlur}
                           className={isInvalid ? "border-red-500" : ""}
                         />
-                        {isInvalid && renderFieldError(field.state.meta.errors)}
+                        {isInvalid && renderFieldError(field.state.meta)}
                       </div>
                     );
                   }}
@@ -328,6 +406,10 @@ export default function CreatePropertyForm() {
               {/* Type */}
               <form.Field
                 name="type"
+                validators={{
+                  onBlur: ({ value }: { value: any }) =>
+                    validateField("type", value),
+                }}
                 children={(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid;
@@ -343,6 +425,7 @@ export default function CreatePropertyForm() {
                         <SelectTrigger
                           id="type"
                           className={isInvalid ? "border-red-500" : ""}
+                          onBlur={field.handleBlur}
                         >
                           <SelectValue placeholder="Select property type" />
                         </SelectTrigger>
@@ -353,7 +436,7 @@ export default function CreatePropertyForm() {
                           <SelectItem value="LAND">Land</SelectItem>
                         </SelectContent>
                       </Select>
-                      {isInvalid && renderFieldError(field.state.meta.errors)}
+                      {isInvalid && renderFieldError(field.state.meta)}
                     </div>
                   );
                 }}
@@ -362,6 +445,10 @@ export default function CreatePropertyForm() {
               {/* Listing Type */}
               <form.Field
                 name="listingType"
+                validators={{
+                  onBlur: ({ value }: { value: any }) =>
+                    validateField("listingType", value),
+                }}
                 children={(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid;
@@ -377,6 +464,7 @@ export default function CreatePropertyForm() {
                         <SelectTrigger
                           id="listingType"
                           className={isInvalid ? "border-red-500" : ""}
+                          onBlur={field.handleBlur}
                         >
                           <SelectValue placeholder="Select listing type" />
                         </SelectTrigger>
@@ -385,7 +473,7 @@ export default function CreatePropertyForm() {
                           <SelectItem value="SALE">For Sale</SelectItem>
                         </SelectContent>
                       </Select>
-                      {isInvalid && renderFieldError(field.state.meta.errors)}
+                      {isInvalid && renderFieldError(field.state.meta)}
                     </div>
                   );
                 }}
@@ -417,7 +505,7 @@ export default function CreatePropertyForm() {
                           Selected: {(field.state.value as File).name}
                         </p>
                       )}
-                      {isInvalid && renderFieldError(field.state.meta.errors)}
+                      {isInvalid && renderFieldError(field.state.meta)}
                     </div>
                   );
                 }}
@@ -429,7 +517,7 @@ export default function CreatePropertyForm() {
                 children={(field) => (
                   <div className="space-y-2">
                     <Label htmlFor="propertyImages">
-                      Additional Property Images (Optional)
+                      Additional Property Images (Max total size: 4MB)
                     </Label>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
                       Select multiple images from your device

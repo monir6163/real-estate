@@ -5,6 +5,7 @@ import { getAllProperties } from "@/actions/properties";
 import { getAllUsers } from "@/actions/users";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { getErrorMessage } from "@/lib/error-message";
 import {
   AlertCircle,
   BarChart3,
@@ -91,7 +92,9 @@ export default function AdminDashboard() {
           pendingBookings: pendingCount,
         });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load data");
+        setError(
+          getErrorMessage(err, "Could not load dashboard data right now."),
+        );
       } finally {
         setLoading(false);
       }

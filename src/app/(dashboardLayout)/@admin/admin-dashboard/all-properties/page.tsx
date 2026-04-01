@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { getErrorMessage } from "@/lib/error-message";
 import {
   AlertCircle,
   ArrowLeft,
@@ -52,12 +53,10 @@ export default function AllPropertiesPage() {
           setProperties(props);
           setFilteredProperties(props);
         } else {
-          setError(result.error || "Failed to load properties");
+          setError(result.error || "Could not load properties right now.");
         }
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load properties",
-        );
+        setError(getErrorMessage(err, "Could not load properties right now."));
       } finally {
         setLoading(false);
       }
@@ -90,11 +89,17 @@ export default function AllPropertiesPage() {
         );
         toast.success(result.message || "Featured status updated");
       } else {
-        toast.error(result.message || "Failed to update featured status");
+        toast.error(
+          result.message ||
+            "Could not update featured status. Please try again.",
+        );
       }
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to update featured status",
+        getErrorMessage(
+          err,
+          "Could not update featured status. Please try again.",
+        ),
       );
     } finally {
       setTogglingId(null);

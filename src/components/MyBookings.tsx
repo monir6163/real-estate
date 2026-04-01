@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getErrorMessage } from "@/lib/error-message";
 import { AlertCircle, CheckCircle2, Clock, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
@@ -146,9 +147,10 @@ export default function MyBookings({ bookings }: MyBookingsProps) {
       } catch (error) {
         console.error("Error updating booking status:", error);
         toast.error(
-          error instanceof Error
-            ? error.message
-            : "Failed to update booking status",
+          getErrorMessage(
+            error,
+            "Could not update booking status. Please try again.",
+          ),
         );
         setProcessingId(null);
       }
@@ -173,9 +175,10 @@ export default function MyBookings({ bookings }: MyBookingsProps) {
       } catch (error) {
         console.error("Error resolving cancellation request:", error);
         toast.error(
-          error instanceof Error
-            ? error.message
-            : "Failed to resolve cancellation request",
+          getErrorMessage(
+            error,
+            "Could not resolve cancellation request. Please try again.",
+          ),
         );
         setProcessingId(null);
       }

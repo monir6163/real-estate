@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getErrorMessage } from "@/lib/error-message";
 import { EditIcon, Eye, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -69,7 +70,10 @@ export default function MyPropertiesGrid({
       } catch (error) {
         console.error("Error deleting property:", error);
         toast.error(
-          error instanceof Error ? error.message : "Failed to delete property",
+          getErrorMessage(
+            error,
+            "Could not delete property. Please try again.",
+          ),
         );
         setDeletingId(null);
       }

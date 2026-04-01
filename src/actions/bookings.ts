@@ -1,5 +1,6 @@
 "use server";
 
+import { getErrorMessage, parseApiErrorMessage } from "@/lib/error-message";
 import { cookies } from "next/headers";
 
 interface BookingPayload {
@@ -73,8 +74,12 @@ export const createBooking = async (payload: BookingPayload) => {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Failed to create booking");
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not create your booking. Please try again.",
+        ),
+      );
     }
 
     const data: BookingApiResponse = await response.json();
@@ -88,7 +93,10 @@ export const createBooking = async (payload: BookingPayload) => {
     return {
       success: false,
       data: null,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: getErrorMessage(
+        error,
+        "Could not create your booking. Please try again.",
+      ),
     };
   }
 };
@@ -111,7 +119,12 @@ export const getMyBookings = async () => {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch bookings");
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not load your bookings right now.",
+        ),
+      );
     }
 
     const data: BookingsApiResponse = await response.json();
@@ -124,7 +137,7 @@ export const getMyBookings = async () => {
     return {
       success: false,
       data: [],
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: getErrorMessage(error, "Could not load your bookings right now."),
     };
   }
 };
@@ -146,6 +159,15 @@ export const getAllBookings = async () => {
       cache: "no-store",
     });
 
+    if (!response.ok) {
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not load all bookings at the moment.",
+        ),
+      );
+    }
+
     const result = await response.json();
     return {
       success: true,
@@ -156,7 +178,10 @@ export const getAllBookings = async () => {
     return {
       success: false,
       data: [],
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: getErrorMessage(
+        error,
+        "Could not load all bookings at the moment.",
+      ),
     };
   }
 };
@@ -178,7 +203,12 @@ export const getBookingById = async (id: string) => {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch booking");
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not load booking details right now.",
+        ),
+      );
     }
 
     const data: BookingApiResponse = await response.json();
@@ -191,7 +221,10 @@ export const getBookingById = async (id: string) => {
     return {
       success: false,
       data: null,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: getErrorMessage(
+        error,
+        "Could not load booking details right now.",
+      ),
     };
   }
 };
@@ -220,7 +253,12 @@ export const updateBookingStatus = async (
     );
 
     if (!response.ok) {
-      throw new Error("Failed to update booking status");
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not update booking status. Please try again.",
+        ),
+      );
     }
 
     const data: BookingApiResponse = await response.json();
@@ -233,7 +271,10 @@ export const updateBookingStatus = async (
     return {
       success: false,
       data: null,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: getErrorMessage(
+        error,
+        "Could not update booking status. Please try again.",
+      ),
     };
   }
 };
@@ -258,8 +299,12 @@ export const deleteBooking = async (bookingId: string) => {
     );
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Failed to delete booking");
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not process booking cancellation. Please try again.",
+        ),
+      );
     }
 
     const data = await response.json();
@@ -272,7 +317,10 @@ export const deleteBooking = async (bookingId: string) => {
     console.error("Error deleting booking:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: getErrorMessage(
+        error,
+        "Could not process booking cancellation. Please try again.",
+      ),
       data: null,
     };
   }

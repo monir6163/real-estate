@@ -1,5 +1,6 @@
 "use server";
 
+import { getErrorMessage, parseApiErrorMessage } from "@/lib/error-message";
 import { cookies } from "next/headers";
 
 export const getReviewsByPropertyId = async (propertyId: string) => {
@@ -21,7 +22,12 @@ export const getReviewsByPropertyId = async (propertyId: string) => {
     );
 
     if (!response.ok) {
-      throw new Error("Failed to fetch reviews");
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not load reviews for this property.",
+        ),
+      );
     }
 
     const result = await response.json();
@@ -30,7 +36,10 @@ export const getReviewsByPropertyId = async (propertyId: string) => {
     console.log(error);
     return {
       data: null,
-      message: "Failed to fetch reviews",
+      message: getErrorMessage(
+        error,
+        "Could not load reviews for this property.",
+      ),
       status: false,
     };
   }
@@ -60,7 +69,7 @@ export const checkUserReview = async (propertyId: string) => {
     console.log(error);
     return {
       data: null,
-      message: "Failed to check review",
+      message: getErrorMessage(error, "Could not check your review status."),
       status: false,
     };
   }
@@ -82,7 +91,9 @@ export const getAgentReviews = async () => {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch reviews");
+      throw new Error(
+        await parseApiErrorMessage(response, "Could not load agent reviews."),
+      );
     }
 
     const result = await response.json();
@@ -95,7 +106,7 @@ export const getAgentReviews = async () => {
     console.log(error);
     return {
       data: null,
-      message: "Failed to fetch reviews",
+      message: getErrorMessage(error, "Could not load agent reviews."),
       status: false,
     };
   }
@@ -117,7 +128,9 @@ export const getUserReviews = async () => {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch reviews");
+      throw new Error(
+        await parseApiErrorMessage(response, "Could not load your reviews."),
+      );
     }
 
     const result = await response.json();
@@ -126,7 +139,7 @@ export const getUserReviews = async () => {
     console.log(error);
     return {
       data: null,
-      message: "Failed to fetch reviews",
+      message: getErrorMessage(error, "Could not load your reviews."),
       status: false,
     };
   }
@@ -150,7 +163,12 @@ export const getAllReviews = async () => {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch reviews");
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not load reviews right now.",
+        ),
+      );
     }
 
     const result = await response.json();
@@ -164,7 +182,7 @@ export const getAllReviews = async () => {
     console.log(error);
     return {
       data: null,
-      message: "Failed to fetch reviews",
+      message: getErrorMessage(error, "Could not load reviews right now."),
       status: false,
     };
   }
@@ -196,8 +214,12 @@ export const submitReview = async (
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Failed to submit review");
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not submit your review. Please try again.",
+        ),
+      );
     }
 
     const result = await response.json();
@@ -210,8 +232,10 @@ export const submitReview = async (
     console.error("Error submitting review:", error);
     return {
       success: false,
-      message:
-        error instanceof Error ? error.message : "Failed to submit review",
+      message: getErrorMessage(
+        error,
+        "Could not submit your review. Please try again.",
+      ),
       data: null,
     };
   }

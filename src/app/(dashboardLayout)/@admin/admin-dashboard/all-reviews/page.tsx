@@ -4,6 +4,7 @@ import { getAllReviews } from "@/actions/review";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { getErrorMessage } from "@/lib/error-message";
 import {
   AlertCircle,
   ArrowLeft,
@@ -82,12 +83,10 @@ export default function AllReviewsPage() {
               : [];
           setReviews(reviewData);
         } else {
-          setError(result.message || "Failed to fetch reviews");
+          setError(result.message || "Could not load reviews right now.");
         }
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to fetch reviews",
-        );
+        setError(getErrorMessage(err, "Could not load reviews right now."));
       } finally {
         setLoading(false);
       }

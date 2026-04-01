@@ -19,10 +19,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { getErrorMessage } from "@/lib/error-message";
+import { createPropertySchema } from "@/schema/propertySchema";
 import { useForm } from "@tanstack/react-form";
 import { AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+
+// Helper function to validate a single field with Zod schema
+const validateField = (fieldName: string, value: any) => {
+  try {
+    const fieldSchema = createPropertySchema.pick({ [fieldName]: true } as any);
+    fieldSchema.parse({ [fieldName]: value });
+    return undefined;
+  } catch (error: any) {
+    if (error.errors && error.errors[0]) {
+      return error.errors[0].message;
+    }
+    return error.message || "Invalid value";
+  }
+};
 
 interface PropertyImage {
   id: string;
@@ -84,6 +102,16 @@ export default function EditPropertyForm({ property }: EditPropertyFormProps) {
         // Create FormData for multipart update
         const formData = new FormData();
 
+        const totalUploadBytes =
+          (newThumbnailFile?.size || 0) +
+          newImageFiles.reduce((sum, file) => sum + file.size, 0);
+
+        if (totalUploadBytes > MAX_UPLOAD_BYTES) {
+          throw new Error(
+            "Total new upload size is too large. Keep files under 4MB.",
+          );
+        }
+
         // Add form fields - string values
         formData.append("title", value.title);
         formData.append("description", value.description);
@@ -125,7 +153,10 @@ export default function EditPropertyForm({ property }: EditPropertyFormProps) {
       } catch (error) {
         console.error("Error updating property:", error);
         toast.error(
-          error instanceof Error ? error.message : "Failed to update property",
+          getErrorMessage(
+            error,
+            "Could not update property. Please review your changes and try again.",
+          ),
         );
       } finally {
         setIsLoading(false);
@@ -133,14 +164,19 @@ export default function EditPropertyForm({ property }: EditPropertyFormProps) {
     },
   });
 
-  const renderFieldError = (errors: any[] | undefined) => {
-    if (!errors || !errors.length) return null;
-    const message = errors[0]?.message;
+  const renderFieldError = (fieldMeta: any) => {
+    // @tanstack/react-form stores errors as an array of strings
+    const errors = fieldMeta?.errors;
+    if (!errors || errors.length === 0) return null;
+
+    // errors[0] should be the error message string
+    const message = errors[0];
     if (!message) return null;
+
     return (
-      <div className="flex items-center gap-2 text-red-500 text-sm">
-        <AlertCircle className="w-4 h-4" />
-        {message}
+      <div className="mt-2 flex items-center gap-2 text-red-500 text-sm font-medium">
+        <AlertCircle className="w-4 h-4 flex-shrink-0" />
+        <span>{message}</span>
       </div>
     );
   };
@@ -188,7 +224,7 @@ export default function EditPropertyForm({ property }: EditPropertyFormProps) {
                         onChange={(e) => field.handleChange(e.target.value)}
                         className={isInvalid ? "border-red-500" : ""}
                       />
-                      {isInvalid && renderFieldError(field.state.meta.errors)}
+                      {isInvalid && renderFieldError(field.state.meta)}
                     </div>
                   );
                 }}
@@ -211,7 +247,7 @@ export default function EditPropertyForm({ property }: EditPropertyFormProps) {
                         onChange={(e) => field.handleChange(e.target.value)}
                         className={isInvalid ? "border-red-500" : ""}
                       />
-                      {isInvalid && renderFieldError(field.state.meta.errors)}
+                      {isInvalid && renderFieldError(field.state.meta)}
                     </div>
                   );
                 }}
@@ -234,7 +270,7 @@ export default function EditPropertyForm({ property }: EditPropertyFormProps) {
                           onChange={(e) => field.handleChange(e.target.value)}
                           className={isInvalid ? "border-red-500" : ""}
                         />
-                        {isInvalid && renderFieldError(field.state.meta.errors)}
+                        {isInvalid && renderFieldError(field.state.meta)}
                       </div>
                     );
                   }}
@@ -283,7 +319,7 @@ export default function EditPropertyForm({ property }: EditPropertyFormProps) {
                           }
                           className={isInvalid ? "border-red-500" : ""}
                         />
-                        {isInvalid && renderFieldError(field.state.meta.errors)}
+                        {isInvalid && renderFieldError(field.state.meta)}
                       </div>
                     );
                   }}
@@ -308,7 +344,7 @@ export default function EditPropertyForm({ property }: EditPropertyFormProps) {
                           }
                           className={isInvalid ? "border-red-500" : ""}
                         />
-                        {isInvalid && renderFieldError(field.state.meta.errors)}
+                        {isInvalid && renderFieldError(field.state.meta)}
                       </div>
                     );
                   }}
@@ -335,7 +371,7 @@ export default function EditPropertyForm({ property }: EditPropertyFormProps) {
                           }
                           className={isInvalid ? "border-red-500" : ""}
                         />
-                        {isInvalid && renderFieldError(field.state.meta.errors)}
+                        {isInvalid && renderFieldError(field.state.meta)}
                       </div>
                     );
                   }}
@@ -359,7 +395,7 @@ export default function EditPropertyForm({ property }: EditPropertyFormProps) {
                           }
                           className={isInvalid ? "border-red-500" : ""}
                         />
-                        {isInvalid && renderFieldError(field.state.meta.errors)}
+                        {isInvalid && renderFieldError(field.state.meta)}
                       </div>
                     );
                   }}
@@ -394,7 +430,7 @@ export default function EditPropertyForm({ property }: EditPropertyFormProps) {
                           <SelectItem value="LAND">Land</SelectItem>
                         </SelectContent>
                       </Select>
-                      {isInvalid && renderFieldError(field.state.meta.errors)}
+                      {isInvalid && renderFieldError(field.state.meta)}
                     </div>
                   );
                 }}
@@ -426,7 +462,7 @@ export default function EditPropertyForm({ property }: EditPropertyFormProps) {
                           <SelectItem value="SALE">For Sale</SelectItem>
                         </SelectContent>
                       </Select>
-                      {isInvalid && renderFieldError(field.state.meta.errors)}
+                      {isInvalid && renderFieldError(field.state.meta)}
                     </div>
                   );
                 }}
@@ -533,7 +569,7 @@ export default function EditPropertyForm({ property }: EditPropertyFormProps) {
                 children={() => (
                   <div className="space-y-2">
                     <Label htmlFor="propertyImages">
-                      Add Additional Property Images (Optional)
+                      Add Additional Property Images (Max total size: 4MB)
                     </Label>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
                       Select multiple images to add to your property

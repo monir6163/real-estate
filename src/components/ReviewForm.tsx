@@ -10,6 +10,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { getErrorMessage } from "@/lib/error-message";
+import {
+  createReviewSchema,
+  type CreateReviewFormType,
+} from "@/schema/reviewSchema";
 import { AlertCircle, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -35,9 +40,9 @@ export default function ReviewForm({
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ rating?: string; comment?: string }>(
-    {},
-  );
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof CreateReviewFormType, string>>
+  >({});
   const [userHasReviewed, setUserHasReviewed] = useState(false);
   const [isLoadingCheck, setIsLoadingCheck] = useState(true);
 
@@ -71,20 +76,29 @@ export default function ReviewForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
 
-    const newErrors: { rating?: string; comment?: string } = {};
+    // Validate using Zod schema
+    const validationResult = createReviewSchema.safeParse({
+      propertyId,
+      rating,
+      comment,
+    });
 
-    if (rating === 0) {
-      newErrors.rating = "Please select a rating";
-    }
+    if (!validationResult.success) {
+      const fieldErrors = validationResult.error.flatten().fieldErrors;
+      const newErrors: Partial<Record<keyof CreateReviewFormType, string>> = {};
 
-    if (!comment.trim()) {
-      newErrors.comment = "Please enter a comment";
-    }
+      Object.entries(fieldErrors).forEach(([key, messages]) => {
+        if (messages && messages.length > 0) {
+          newErrors[key as keyof CreateReviewFormType] = messages[0];
+        }
+      });
 
-    if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      toast.error("Please fill in all required fields");
+      toast.error(
+        Object.values(newErrors)[0] || "Please check your review details.",
+      );
       return;
     }
 
@@ -103,7 +117,10 @@ export default function ReviewForm({
       onReviewSubmitted?.();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to submit review",
+        getErrorMessage(
+          error,
+          "Could not submit your review. Please try again.",
+        ),
       );
     } finally {
       setIsSubmitting(false);

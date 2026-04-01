@@ -1,5 +1,6 @@
 "use server";
 
+import { getErrorMessage, parseApiErrorMessage } from "@/lib/error-message";
 import { cookies } from "next/headers";
 
 interface PropertiesFilter {
@@ -100,7 +101,12 @@ export const getAllProperties = async (filters?: PropertiesFilter) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch properties: ${response.status}`);
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not load properties right now.",
+        ),
+      );
     }
 
     const data: PropertiesApiResponse = await response.json();
@@ -120,7 +126,7 @@ export const getAllProperties = async (filters?: PropertiesFilter) => {
         limit: 10,
         totalPages: 0,
       },
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: getErrorMessage(error, "Could not load properties right now."),
     };
   }
 };
@@ -143,7 +149,12 @@ export const getPropertyById = async (id: string) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch property: ${response.status}`);
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not load property details right now.",
+        ),
+      );
     }
 
     const data: { success: boolean; message: string; data: PropertyResponse } =
@@ -157,7 +168,10 @@ export const getPropertyById = async (id: string) => {
     return {
       success: false,
       data: null,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: getErrorMessage(
+        error,
+        "Could not load property details right now.",
+      ),
     };
   }
 };
@@ -200,7 +214,10 @@ export const getFeaturedProperties = async (filters?: PropertiesFilter) => {
 
     if (!response.ok) {
       throw new Error(
-        `Failed to fetch featured properties: ${response.status}`,
+        await parseApiErrorMessage(
+          response,
+          "Could not load featured properties right now.",
+        ),
       );
     }
 
@@ -221,7 +238,10 @@ export const getFeaturedProperties = async (filters?: PropertiesFilter) => {
         limit: 10,
         totalPages: 0,
       },
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: getErrorMessage(
+        error,
+        "Could not load featured properties right now.",
+      ),
     };
   }
 };
@@ -276,7 +296,12 @@ export const ownerGetProperties = async () => {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch owner properties: ${response.status}`);
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not load your properties right now.",
+        ),
+      );
     }
 
     const data: PropertiesApiResponse = await response.json();
@@ -290,7 +315,10 @@ export const ownerGetProperties = async () => {
       success: false,
       data: [],
 
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: getErrorMessage(
+        error,
+        "Could not load your properties right now.",
+      ),
     };
   }
 };
@@ -313,11 +341,13 @@ export const createProperty = async (formData: FormData) => {
       body: formData,
       cache: "no-store",
     });
-
+    console.log(response);
     if (!response.ok) {
-      const error = await response.json();
       throw new Error(
-        error.message || `Failed to create property: ${response.status}`,
+        await parseApiErrorMessage(
+          response,
+          "Could not create property. Please check the form and try again.",
+        ),
       );
     }
 
@@ -332,8 +362,10 @@ export const createProperty = async (formData: FormData) => {
     console.error("Error creating property:", error);
     return {
       success: false,
-      message:
-        error instanceof Error ? error.message : "Failed to create property",
+      message: getErrorMessage(
+        error,
+        "Could not create property. Please check the form and try again.",
+      ),
       data: null,
     };
   }
@@ -358,15 +390,12 @@ export const deleteProperty = async (propertyId: string) => {
     });
 
     if (!response.ok) {
-      let errorMessage = "Failed to delete property";
-      try {
-        const error = await response.json();
-        errorMessage =
-          error.message || `Failed to delete property: ${response.status}`;
-      } catch {
-        errorMessage = `Failed to delete property: ${response.status}`;
-      }
-      throw new Error(errorMessage);
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not delete this property. Please try again.",
+        ),
+      );
     }
 
     // Handle 204 No Content or empty responses
@@ -392,8 +421,10 @@ export const deleteProperty = async (propertyId: string) => {
     console.error("Error deleting property:", error);
     return {
       success: false,
-      message:
-        error instanceof Error ? error.message : "Failed to delete property",
+      message: getErrorMessage(
+        error,
+        "Could not delete this property. Please try again.",
+      ),
     };
   }
 };
@@ -421,9 +452,11 @@ export const updateProperty = async (
     });
 
     if (!response.ok) {
-      const error = await response.json();
       throw new Error(
-        error.message || `Failed to update property: ${response.status}`,
+        await parseApiErrorMessage(
+          response,
+          "Could not update property. Please review your changes and try again.",
+        ),
       );
     }
 
@@ -438,8 +471,10 @@ export const updateProperty = async (
     console.error("Error updating property:", error);
     return {
       success: false,
-      message:
-        error instanceof Error ? error.message : "Failed to update property",
+      message: getErrorMessage(
+        error,
+        "Could not update property. Please review your changes and try again.",
+      ),
       data: null,
     };
   }
@@ -465,7 +500,12 @@ export const ownerBookings = async () => {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch owner bookings: ${response.status}`);
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not load your booking requests right now.",
+        ),
+      );
     }
 
     const data: { success: boolean; message: string; data: any[] } =
@@ -479,7 +519,10 @@ export const ownerBookings = async () => {
     return {
       success: false,
       data: [],
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: getErrorMessage(
+        error,
+        "Could not load your booking requests right now.",
+      ),
     };
   }
 };
@@ -508,9 +551,11 @@ export const updateBookingStatus = async (
     });
 
     if (!response.ok) {
-      const error = await response.json();
       throw new Error(
-        error.message || `Failed to update booking status: ${response.status}`,
+        await parseApiErrorMessage(
+          response,
+          "Could not update booking status. Please try again.",
+        ),
       );
     }
 
@@ -525,10 +570,10 @@ export const updateBookingStatus = async (
     console.error("Error updating booking status:", error);
     return {
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to update booking status",
+      message: getErrorMessage(
+        error,
+        "Could not update booking status. Please try again.",
+      ),
       data: null,
     };
   }
@@ -558,10 +603,11 @@ export const resolveBookingCancellation = async (
     });
 
     if (!response.ok) {
-      const error = await response.json();
       throw new Error(
-        error.message ||
-          `Failed to ${decision.toLowerCase()} cancellation request: ${response.status}`,
+        await parseApiErrorMessage(
+          response,
+          `Could not ${decision.toLowerCase()} cancellation request. Please try again.`,
+        ),
       );
     }
 
@@ -576,10 +622,10 @@ export const resolveBookingCancellation = async (
     console.error("Error resolving cancellation request:", error);
     return {
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to resolve cancellation request",
+      message: getErrorMessage(
+        error,
+        "Could not resolve cancellation request. Please try again.",
+      ),
       data: null,
     };
   }
@@ -605,9 +651,11 @@ export const togglePropertyFeatured = async (propertyId: string) => {
     });
 
     if (!response.ok) {
-      const error = await response.json();
       throw new Error(
-        error.message || `Failed to toggle featured status: ${response.status}`,
+        await parseApiErrorMessage(
+          response,
+          "Could not update featured status. Please try again.",
+        ),
       );
     }
 
@@ -622,10 +670,10 @@ export const togglePropertyFeatured = async (propertyId: string) => {
     console.error("Error toggling featured status:", error);
     return {
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to toggle featured status",
+      message: getErrorMessage(
+        error,
+        "Could not update featured status. Please try again.",
+      ),
       data: null,
     };
   }

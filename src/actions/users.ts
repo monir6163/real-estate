@@ -1,5 +1,6 @@
 "use server";
 
+import { getErrorMessage, parseApiErrorMessage } from "@/lib/error-message";
 import { cookies } from "next/headers";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL as string;
@@ -21,7 +22,7 @@ export const getUserSession = async () => {
   } catch (error) {
     return {
       data: null,
-      message: "Failed to fetch session data",
+      message: getErrorMessage(error, "Could not load your session right now."),
       status: false,
     };
   }
@@ -38,7 +39,9 @@ export const getCurrentUser = async () => {
     });
 
     if (!res.ok) {
-      throw new Error("Failed to fetch user data");
+      throw new Error(
+        await parseApiErrorMessage(res, "Could not load your profile data."),
+      );
     }
 
     const result = await res.json();
@@ -47,7 +50,7 @@ export const getCurrentUser = async () => {
     console.log(error);
     return {
       data: null,
-      message: "Failed to fetch user data",
+      message: getErrorMessage(error, "Could not load your profile data."),
       status: false,
     };
   }
@@ -71,10 +74,12 @@ export const getAllUsers = async () => {
     });
 
     if (!response.ok) {
-      const error = await response.json();
       return {
         data: null,
-        message: error.message || "Failed to fetch users",
+        message: await parseApiErrorMessage(
+          response,
+          "Could not load users right now.",
+        ),
         status: false,
       };
     }
@@ -89,7 +94,7 @@ export const getAllUsers = async () => {
     console.log(error);
     return {
       data: null,
-      message: "Failed to fetch users",
+      message: getErrorMessage(error, "Could not load users right now."),
       status: false,
     };
   }
@@ -113,10 +118,12 @@ export const updateUserStatus = async (userId: string, status: string) => {
     });
 
     if (!response.ok) {
-      const error = await response.json();
       return {
         data: null,
-        message: error.message || "Failed to update user status",
+        message: await parseApiErrorMessage(
+          response,
+          "Could not update user status. Please try again.",
+        ),
         status: false,
       };
     }
@@ -131,7 +138,10 @@ export const updateUserStatus = async (userId: string, status: string) => {
     console.log(error);
     return {
       data: null,
-      message: "Failed to update user status",
+      message: getErrorMessage(
+        error,
+        "Could not update user status. Please try again.",
+      ),
       status: false,
     };
   }
@@ -151,10 +161,12 @@ export const updateUserProfile = async (profileData: any) => {
     });
 
     if (!response.ok) {
-      const error = await response.json();
       return {
         data: null,
-        message: error.message || "Failed to update user profile",
+        message: await parseApiErrorMessage(
+          response,
+          "Could not update your profile. Please try again.",
+        ),
         status: false,
       };
     }
@@ -169,10 +181,10 @@ export const updateUserProfile = async (profileData: any) => {
     console.log(error);
     return {
       data: null,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to update user profile",
+      message: getErrorMessage(
+        error,
+        "Could not update your profile. Please try again.",
+      ),
       status: false,
     };
   }

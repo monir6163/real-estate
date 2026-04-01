@@ -17,6 +17,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { getErrorMessage } from "@/lib/error-message";
+import {
+  createBookingSchema,
+  type CreateBookingFormType,
+} from "@/schema/bookingSchema";
 import { Calendar, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -42,16 +47,34 @@ const BookPropertyModal = ({
   const [loading, setLoading] = useState(false);
   const [visitDate, setVisitDate] = useState("");
   const [message, setMessage] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof CreateBookingFormType, string>>
+  >({});
 
   const handleBooking = async () => {
     try {
       setLoading(true);
-      setError(null);
+      setErrors({});
 
-      if (!visitDate) {
-        setError("Please select a visit date");
-        setLoading(false);
+      // Validate using Zod schema
+      const validationResult = createBookingSchema.safeParse({
+        propertyId,
+        visitDate,
+        message,
+      });
+
+      if (!validationResult.success) {
+        const fieldErrors = validationResult.error.flatten().fieldErrors;
+        const newErrors: Partial<Record<keyof CreateBookingFormType, string>> =
+          {};
+
+        Object.entries(fieldErrors).forEach(([key, messages]) => {
+          if (messages && messages.length > 0) {
+            newErrors[key as keyof CreateBookingFormType] = messages[0];
+          }
+        });
+
+        setErrors(newErrors);
         return;
       }
 
@@ -63,7 +86,10 @@ const BookPropertyModal = ({
       });
 
       if (!checkoutResult.success) {
-        setError(checkoutResult.error || "Failed to create checkout session");
+        setErrors({
+          propertyId: (checkoutResult.error ||
+            "Could not start payment checkout. Please try again.") as any,
+        });
         setLoading(false);
         return;
       }
@@ -72,22 +98,25 @@ const BookPropertyModal = ({
 
       // Step 2: Redirect to Stripe checkout
       if (checkoutResult.data?.checkoutUrl) {
-        console.log(
-          "Redirecting to Stripe URL:",
-          checkoutResult.data.checkoutUrl,
-        );
+        console.log(checkoutResult.data.checkoutUrl);
         // Use window.location.href for external redirect
         setTimeout(() => {
           window.location.href = checkoutResult.data?.checkoutUrl || "";
         }, 0);
       } else {
-        setError(
-          "No payment method found. Please try again or contact support.",
-        );
+        setErrors({
+          propertyId:
+            "No payment method found. Please try again or contact support." as any,
+        });
         setLoading(false);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setErrors({
+        propertyId: getErrorMessage(
+          err,
+          "Could not start payment checkout. Please try again.",
+        ) as any,
+      });
       setLoading(false);
     }
   };
@@ -166,9 +195,9 @@ const BookPropertyModal = ({
               </p>
             </div>
 
-            {error && (
+            {Object.values(errors).some((e) => e) && (
               <div className="bg-destructive/10 border border-destructive text-destructive text-sm p-3 rounded-lg">
-                {error}
+                {Object.values(errors)[0]}
               </div>
             )}
 
@@ -181,10 +210,18 @@ const BookPropertyModal = ({
               <Input
                 type="datetime-local"
                 value={visitDate}
-                onChange={(e) => setVisitDate(e.target.value)}
-                className="w-full"
+                onChange={(e) => {
+                  setVisitDate(e.target.value);
+                  setErrors({ ...errors, visitDate: undefined });
+                }}
+                className={`w-full ${errors.visitDate ? "border-destructive" : ""}`}
                 required
               />
+              {errors.visitDate && (
+                <p className="text-xs text-destructive mt-1">
+                  {errors.visitDate}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground mt-1">
                 Choose when you'd like to visit the property
               </p>
@@ -199,9 +236,17 @@ const BookPropertyModal = ({
               <Textarea
                 placeholder="Share any questions or special requests..."
                 value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="w-full min-h-24 resize-none"
+                onChange={(e) => {
+                  setMessage(e.target.value);
+                  setErrors({ ...errors, message: undefined });
+                }}
+                className={`w-full min-h-24 resize-none ${errors.message ? "border-destructive" : ""}`}
               />
+              {errors.message && (
+                <p className="text-xs text-destructive mt-1">
+                  {errors.message}
+                </p>
+              )}
             </div>
 
             {/* Payment Info */}

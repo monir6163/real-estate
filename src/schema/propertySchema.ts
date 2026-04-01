@@ -20,8 +20,8 @@ export const createPropertySchema = z.object({
   status: z.enum(["AVAILABLE", "RENTED", "SOLD"]).default("AVAILABLE"),
   isPremium: z.coerce.boolean(),
   isFeatured: z.coerce.boolean(),
-  thumbnail: z.any().optional(),
-  propertyImages: z.any().optional(),
+  thumbnail: z.any(),
+  propertyImages: z.any(),
 });
 
 export type CreatePropertyFormType = z.infer<typeof createPropertySchema>;

@@ -4,6 +4,7 @@ import { getAllBookings } from "@/actions/bookings";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { getErrorMessage } from "@/lib/error-message";
 import {
   AlertCircle,
   ArrowLeft,
@@ -60,12 +61,10 @@ export default function AllBookingsPage() {
           setBookings(bookingsData);
           setFilteredBookings(bookingsData);
         } else {
-          setError(result.error || "Failed to load bookings");
+          setError(result.error || "Could not load bookings right now.");
         }
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load bookings",
-        );
+        setError(getErrorMessage(err, "Could not load bookings right now."));
       } finally {
         setLoading(false);
       }
