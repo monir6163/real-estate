@@ -21,6 +21,8 @@ import * as React from "react";
 import { toast } from "sonner";
 import * as z from "zod";
 
+import { FaGoogle } from "react-icons/fa6";
+
 const LoginFormSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -153,6 +155,7 @@ export function LoginForm({
                 className="w-full"
                 onClick={handleGoogleLogin}
               >
+                <FaGoogle className="mr-2" />
                 Continue with Google
               </Button>
               <FieldDescription className="text-center">

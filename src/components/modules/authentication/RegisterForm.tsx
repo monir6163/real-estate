@@ -7,6 +7,7 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
+  FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
@@ -18,6 +19,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
+import { FaGoogle } from "react-icons/fa6";
 import { toast } from "sonner";
 
 export function RegisterForm({
@@ -57,6 +59,13 @@ export function RegisterForm({
       }
     },
   });
+
+  const handleGoogleLogin = async () => {
+    const data = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: process.env.NEXT_PUBLIC_FRONTEND_URL!,
+    });
+  };
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
@@ -174,6 +183,16 @@ export function RegisterForm({
                   </Link>
                 </FieldDescription>
               )}
+              <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card"></FieldSeparator>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleGoogleLogin}
+              >
+                <FaGoogle className="mr-2" />
+                Continue with Google
+              </Button>
               <FieldDescription className="text-center">
                 Already have an account?{" "}
                 <Link href="/login" className="text-primary hover:underline">

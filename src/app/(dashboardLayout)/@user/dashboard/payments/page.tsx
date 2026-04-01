@@ -2,6 +2,7 @@
 import { getMyPayments } from "@/actions/payments";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, CheckCircle, CreditCard } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -80,8 +81,46 @@ export default function PaymentHistoryPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">Loading payments...</p>
+      <div className="p-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Payment History</h1>
+          <p className="text-muted-foreground">
+            Track all your bookings and payments
+          </p>
+        </div>
+
+        {/* Summary Skeleton */}
+        <Card className="p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <Skeleton className="h-4 w-32 mb-3" />
+              <Skeleton className="h-8 w-40" />
+            </div>
+            <Skeleton className="h-12 w-12 rounded-full" />
+          </div>
+        </Card>
+
+        {/* Payment Items Skeleton */}
+        <div className="space-y-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-4 flex-1">
+                  <Skeleton className="h-5 w-5 rounded-full" />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Skeleton className="h-5 w-48" />
+                      <Skeleton className="h-6 w-20" />
+                    </div>
+                    <Skeleton className="h-4 w-40 mb-3" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                </div>
+                <Skeleton className="h-8 w-24" />
+              </div>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }

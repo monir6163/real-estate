@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AlertCircle, CheckCircle2, Clock, XCircle } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -57,6 +58,30 @@ interface MyBookingsProps {
 
 export default function MyBookings({ bookings }: MyBookingsProps) {
   const [isPending, startTransition] = useTransition();
+
+  if (!bookings || bookings.length === 0) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+            <AlertCircle className="w-6 h-6 text-slate-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+            No Bookings Yet
+          </h3>
+          <p className="text-slate-600 dark:text-slate-400 text-center mb-6 max-w-sm">
+            You haven't made any property bookings yet. Explore available
+            properties and make your first booking.
+          </p>
+          <Link href="/properties">
+            <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
+              Browse Properties
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
+    );
+  }
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
 

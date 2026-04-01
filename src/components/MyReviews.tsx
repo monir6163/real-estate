@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AlertCircle, Star } from "lucide-react";
+import Link from "next/link";
 
 interface Review {
   id: string;
@@ -34,6 +36,30 @@ interface MyReviewsProps {
 }
 
 export default function MyReviews({ reviews }: MyReviewsProps) {
+  if (!reviews || reviews.length === 0) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+            <AlertCircle className="w-6 h-6 text-slate-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+            No Reviews Yet
+          </h3>
+          <p className="text-slate-600 dark:text-slate-400 text-center mb-6 max-w-sm">
+            You haven't submitted any reviews yet. After booking a property, you
+            can share your experience.
+          </p>
+          <Link href="/properties">
+            <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
+              Browse Properties
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const renderStars = (rating: number) => {
     return (
       <div className="flex gap-1">

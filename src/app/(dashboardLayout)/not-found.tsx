@@ -47,10 +47,10 @@ export default function NotFound() {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-          <Link href="/">
+          <Link href="/dashboard">
             <Button className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold px-8 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2">
               <Home className="w-5 h-5" />
-              Back to Home
+              Back to Dashboard
             </Button>
           </Link>
 
@@ -68,16 +68,16 @@ export default function NotFound() {
         {/* Additional Links */}
         <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
           <h3 className="text-sm font-semibold text-gray-900 mb-4">
-            Helpful Links
+            Quick Navigation
           </h3>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <li>
               <Link
-                href="/"
+                href="/dashboard"
                 className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors hover:underline"
               >
-                <ArrowLeft className="w-4 h-4" />
-                Home Page
+                <Home className="w-4 h-4" />
+                Dashboard
               </Link>
             </li>
             <li>
@@ -86,21 +86,21 @@ export default function NotFound() {
                 className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors hover:underline"
               >
                 <Search className="w-4 h-4" />
-                Search Properties
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/login"
-                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors hover:underline"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Sign In
+                All Properties
               </Link>
             </li>
             <li>
               <Link
                 href="/"
+                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors hover:underline"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Home
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/contact"
                 className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors hover:underline"
               >
                 <MapPin className="w-4 h-4" />

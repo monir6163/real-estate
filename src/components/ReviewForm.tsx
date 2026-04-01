@@ -124,9 +124,11 @@ export default function ReviewForm({
             key={star}
             type="button"
             onClick={() => onChange?.(star)}
-            disabled={!onChange}
-            className={`transition-transform ${
-              onChange ? "hover:scale-110 cursor-pointer" : "cursor-default"
+            disabled={!onChange || isSubmitting}
+            className={`transition-all transform ${
+              onChange && !isSubmitting
+                ? "hover:scale-110 cursor-pointer"
+                : "cursor-default"
             }`}
           >
             <Star
@@ -141,6 +143,25 @@ export default function ReviewForm({
       </div>
     );
   };
+
+  if (isLoadingCheck) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Submit a Review</CardTitle>
+          <CardDescription>
+            Share your experience with this property
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4 animate-pulse">
+            <div className="h-10 bg-slate-200 dark:bg-slate-700 rounded"></div>
+            <div className="h-32 bg-slate-200 dark:bg-slate-700 rounded"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
