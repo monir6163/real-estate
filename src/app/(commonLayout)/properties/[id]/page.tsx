@@ -201,8 +201,8 @@ export default function PropertyDetailPage() {
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious className="left-4" />
-              <CarouselNext className="right-4" />
+              <CarouselPrevious className="left-4 hidden sm:flex" />
+              <CarouselNext className="right-4 hidden sm:flex" />
             </Carousel>
           ) : (
             <div className="relative aspect-video bg-slate-200 dark:bg-slate-800 rounded-lg overflow-hidden">
@@ -217,22 +217,22 @@ export default function PropertyDetailPage() {
       </div>
 
       {/* Content Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
             {/* Header with Price and Actions */}
             <div className="bg-white dark:bg-slate-800 rounded-lg p-6 mb-6 border border-slate-200 dark:border-slate-700">
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4">
                 <div className="flex-1">
-                  <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-2 break-words">
                     {property.title}
                   </h1>
-                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mb-4">
+                  <div className="flex items-start sm:items-center gap-2 text-slate-600 dark:text-slate-400 mb-4">
                     <MapPin className="w-4 h-4" />
-                    <span>{property.location}</span>
+                    <span className="break-words">{property.location}</span>
                   </div>
-                  <div className="flex gap-2 mb-4">
+                  <div className="flex flex-wrap gap-2 mb-4">
                     <Badge
                       className={
                         statusColor[
@@ -251,20 +251,20 @@ export default function PropertyDetailPage() {
                     )}
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                <div className="text-left sm:text-right">
+                  <p className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400">
                     {formatPrice(property.price)}
                   </p>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   onClick={() => setSaved(!saved)}
                   variant="outline"
                   size="sm"
-                  className="flex items-center gap-2"
+                  className="w-full sm:w-auto flex items-center gap-2"
                 >
                   <Heart
                     className={`w-4 h-4 ${saved ? "fill-current text-red-600" : ""}`}
@@ -274,7 +274,7 @@ export default function PropertyDetailPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex items-center gap-2"
+                  className="w-full sm:w-auto flex items-center gap-2"
                 >
                   <Share2 className="w-4 h-4" />
                   Share
@@ -410,6 +410,13 @@ export default function PropertyDetailPage() {
                 isLoggedIn={isLoggedIn}
                 status={property.status}
               />
+              {!isLoggedIn &&
+                property.status !== "SOLD" &&
+                property.status !== "RENTED" && (
+                  <p className="text-xs text-amber-700 dark:text-amber-400 mt-2 text-center font-medium">
+                    First login your account
+                  </p>
+                )}
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-3 text-center">
                 {property.status === "SOLD" || property.status === "RENTED" ? (
                   <span className="text-red-600 dark:text-red-400 font-semibold">
@@ -482,7 +489,7 @@ export default function PropertyDetailPage() {
                     <Mail className="w-4 h-4 shrink-0" />
                     <a
                       href={`mailto:${property.agent.email}`}
-                      className="hover:text-blue-600 dark:hover:text-blue-400"
+                      className="break-all hover:text-blue-600 dark:hover:text-blue-400"
                     >
                       {property.agent.email}
                     </a>
@@ -521,11 +528,11 @@ export default function PropertyDetailPage() {
                     {new Date(property.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex items-start justify-between gap-3">
                   <span className="text-slate-600 dark:text-slate-400">
                     Location:
                   </span>
-                  <span className="font-medium text-slate-900 dark:text-white text-right">
+                  <span className="font-medium text-slate-900 dark:text-white text-right break-words">
                     {property.location}
                   </span>
                 </div>
@@ -537,7 +544,10 @@ export default function PropertyDetailPage() {
         {/* Related Properties Link */}
         <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-700">
           <Link href="/properties">
-            <Button variant="outline" className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto flex items-center gap-2"
+            >
               ← View More Properties
             </Button>
           </Link>
