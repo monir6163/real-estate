@@ -13,11 +13,21 @@ interface BookingResponse {
   id: string;
   propertyId: string;
   agentId: string;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+  status:
+    | "PENDING"
+    | "APPROVED"
+    | "REJECTED"
+    | "CANCELLATION_REQUESTED"
+    | "CANCELLED";
   message?: string;
   visitDate?: string;
   createdAt: string;
   updatedAt: string;
+  payment?: {
+    id: string;
+    status: "PENDING" | "SUCCESS" | "FAILED" | "REFUNDED";
+    amount: number;
+  };
   property?: {
     id: string;
     title: string;
@@ -255,13 +265,15 @@ export const deleteBooking = async (bookingId: string) => {
     const data = await response.json();
     return {
       success: true,
-      message: data.message || "Booking cancelled successfully",
+      message: data.message || "Booking cancellation processed successfully",
+      data: data.data,
     };
   } catch (error) {
     console.error("Error deleting booking:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
+      data: null,
     };
   }
 };

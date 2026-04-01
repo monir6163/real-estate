@@ -497,6 +497,57 @@ export const updateBookingStatus = async (
   }
 };
 
+export const resolveBookingCancellation = async (
+  bookingId: string,
+  decision: "APPROVE" | "REJECT",
+) => {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+
+    const cookieStore = await cookies();
+    const url = `${BACKEND_URL}/api/v1/bookings/${bookingId}/cancel-decision`;
+
+    const response = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieStore.toString(),
+      },
+      body: JSON.stringify({ decision }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(
+        error.message ||
+          `Failed to ${decision.toLowerCase()} cancellation request: ${response.status}`,
+      );
+    }
+
+    const data: { success: boolean; message: string; data: any } =
+      await response.json();
+    return {
+      success: true,
+      message: data.message,
+      data: data.data,
+    };
+  } catch (error) {
+    console.error("Error resolving cancellation request:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to resolve cancellation request",
+      data: null,
+    };
+  }
+};
+
 export const togglePropertyFeatured = async (propertyId: string) => {
   try {
     const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;

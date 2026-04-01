@@ -1,6 +1,9 @@
 "use client";
 
-import { updateBookingStatus } from "@/actions/properties";
+import {
+  resolveBookingCancellation,
+  updateBookingStatus,
+} from "@/actions/properties";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,12 +34,21 @@ interface Agent {
 
 interface Booking {
   id: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  status:
+    | "PENDING"
+    | "APPROVED"
+    | "REJECTED"
+    | "CANCELLATION_REQUESTED"
+    | "CANCELLED";
   message?: string;
   visitDate?: string;
   createdAt: string;
   property: Property;
   agent: Agent;
+  payment?: {
+    status: "PENDING" | "SUCCESS" | "FAILED" | "REFUNDED";
+    amount?: number;
+  };
 }
 
 interface MyBookingsProps {
@@ -118,6 +130,33 @@ export default function MyBookings({ bookings }: MyBookingsProps) {
     });
   };
 
+  const handleCancellationDecision = (
+    bookingId: string,
+    decision: "APPROVE" | "REJECT",
+  ) => {
+    setProcessingId(bookingId);
+    startTransition(async () => {
+      try {
+        const result = await resolveBookingCancellation(bookingId, decision);
+
+        if (!result.success) {
+          throw new Error(result.message);
+        }
+
+        toast.success(result.message);
+        window.location.reload();
+      } catch (error) {
+        console.error("Error resolving cancellation request:", error);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to resolve cancellation request",
+        );
+        setProcessingId(null);
+      }
+    });
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "APPROVED":
@@ -138,6 +177,20 @@ export default function MyBookings({ bookings }: MyBookingsProps) {
           >
             <XCircle className="w-3 h-3 mr-1" />
             Rejected
+          </Badge>
+        );
+      case "CANCELLATION_REQUESTED":
+        return (
+          <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Cancellation Requested
+          </Badge>
+        );
+      case "CANCELLED":
+        return (
+          <Badge className="bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200">
+            <XCircle className="w-3 h-3 mr-1" />
+            Cancelled
           </Badge>
         );
       case "PENDING":
@@ -311,16 +364,51 @@ export default function MyBookings({ bookings }: MyBookingsProps) {
                 </div>
               )}
 
-              {booking.status !== "PENDING" && (
-                <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Status:{" "}
-                    <span className="font-semibold text-slate-900 dark:text-white">
-                      {booking.status}
-                    </span>
+              {booking.status === "CANCELLATION_REQUESTED" && (
+                <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                  <p className="text-sm text-orange-700 dark:text-orange-300">
+                    User requested cancellation for a paid booking. Approve to
+                    issue refund.
                   </p>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() =>
+                        handleCancellationDecision(booking.id, "APPROVE")
+                      }
+                      disabled={processingId === booking.id || isPending}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      {processingId === booking.id && isPending
+                        ? "Processing..."
+                        : "Approve + Refund"}
+                    </Button>
+                    <Button
+                      onClick={() =>
+                        handleCancellationDecision(booking.id, "REJECT")
+                      }
+                      disabled={processingId === booking.id || isPending}
+                      variant="destructive"
+                      className="flex-1"
+                    >
+                      {processingId === booking.id && isPending
+                        ? "Processing..."
+                        : "Reject Request"}
+                    </Button>
+                  </div>
                 </div>
               )}
+
+              {booking.status !== "PENDING" &&
+                booking.status !== "CANCELLATION_REQUESTED" && (
+                  <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Status:{" "}
+                      <span className="font-semibold text-slate-900 dark:text-white">
+                        {booking.status}
+                      </span>
+                    </p>
+                  </div>
+                )}
             </CardContent>
           </Card>
         );
