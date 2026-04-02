@@ -135,9 +135,11 @@ export function VerifyEmailContent() {
         <div className="text-center">
           <Link href="/" className="inline-flex items-center gap-2">
             <div className="w-12 h-12 rounded-xl bg-red-600 flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">F</span>
+              <span className="text-white font-bold text-2xl">SP</span>
             </div>
-            <span className="text-2xl font-bold text-foreground">FoodHub</span>
+            <span className="text-2xl font-bold text-foreground">
+              SmartProperty
+            </span>
           </Link>
         </div>
 

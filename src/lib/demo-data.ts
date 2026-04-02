@@ -20,6 +20,8 @@ export type Property = {
   featured: boolean;
   yearBuilt: number;
   garage: number;
+  reviewCount?: number;
+  averageRating?: number;
 };
 
 export const properties: Property[] = [

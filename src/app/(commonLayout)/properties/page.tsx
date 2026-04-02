@@ -113,6 +113,16 @@ export default function PropertiesPage() {
           const statusDisplay =
             prop.listingType === "RENT" ? "For Rent" : "For Sale";
 
+          const reviewCount = prop.reviews?.length || 0;
+          const averageRating =
+            reviewCount > 0
+              ? prop.reviews.reduce(
+                  (sum: number, review: { rating: number }) =>
+                    sum + review.rating,
+                  0,
+                ) / reviewCount
+              : 0;
+
           return {
             id: prop.id,
             title: prop.title,
@@ -137,6 +147,8 @@ export default function PropertiesPage() {
             featured: prop.isFeatured,
             yearBuilt: new Date(prop.createdAt).getFullYear(),
             garage: 0,
+            reviewCount,
+            averageRating,
           };
         });
 

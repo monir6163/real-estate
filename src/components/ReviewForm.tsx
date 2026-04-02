@@ -16,6 +16,7 @@ import {
   type CreateReviewFormType,
 } from "@/schema/reviewSchema";
 import { AlertCircle, Star } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -24,16 +25,19 @@ interface Review {
   rating: number;
   comment?: string;
   createdAt: string;
+  reviewerName?: string;
 }
 
 interface ReviewFormProps {
   propertyId: string;
+  isLoggedIn?: boolean;
   onReviewSubmitted?: () => void;
   existingReviews?: Review[];
 }
 
 export default function ReviewForm({
   propertyId,
+  isLoggedIn = false,
   onReviewSubmitted,
   existingReviews = [],
 }: ReviewFormProps) {
@@ -47,6 +51,12 @@ export default function ReviewForm({
   const [isLoadingCheck, setIsLoadingCheck] = useState(true);
 
   useEffect(() => {
+    if (!isLoggedIn) {
+      setUserHasReviewed(false);
+      setIsLoadingCheck(false);
+      return;
+    }
+
     const checkReview = async () => {
       try {
         setIsLoadingCheck(true);
@@ -62,7 +72,7 @@ export default function ReviewForm({
     };
 
     checkReview();
-  }, [propertyId]);
+  }, [propertyId, isLoggedIn]);
 
   const handleRatingChange = (newRating: number) => {
     setRating(newRating);
@@ -210,7 +220,19 @@ export default function ReviewForm({
       )}
 
       {/* Review Form */}
-      {userHasReviewed ? (
+      {!isLoggedIn ? (
+        <Card className="p-6 border-slate-200 dark:border-slate-700">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-3">
+            Reviews
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
+            Please log in to submit a review for this property.
+          </p>
+          <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Link href="/login">Go to Login</Link>
+          </Button>
+        </Card>
+      ) : userHasReviewed ? (
         <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
@@ -316,17 +338,22 @@ export default function ReviewForm({
             <Card key={review.id} className="p-4">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={`w-4 h-4 ${
-                          star <= review.rating
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "text-slate-300 dark:text-slate-600"
-                        }`}
-                      />
-                    ))}
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {review.reviewerName || "Anonymous User"}
+                    </p>
+                    <div className="flex gap-1 mt-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`w-4 h-4 ${
+                            star <= review.rating
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "text-slate-300 dark:text-slate-600"
+                          }`}
+                        />
+                      ))}
+                    </div>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {new Date(review.createdAt).toLocaleDateString()}

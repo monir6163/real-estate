@@ -1,6 +1,6 @@
 "use client";
 import { Property } from "@/lib/demo-data";
-import { Bath, BedDouble, Heart, MapPin, Maximize } from "lucide-react";
+import { Bath, BedDouble, Heart, MapPin, Maximize, Star } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -11,6 +11,8 @@ interface PropertyCardProps {
 
 const PropertyCard = ({ property, layout = "grid" }: PropertyCardProps) => {
   const [saved, setSaved] = useState(false);
+  const reviewCount = property.reviewCount || 0;
+  const averageRating = property.averageRating || 0;
 
   const formatPrice = (price: number, status: string) => {
     if (status === "For Rent") return `$${price.toLocaleString()}/mo`;
@@ -61,21 +63,32 @@ const PropertyCard = ({ property, layout = "grid" }: PropertyCardProps) => {
             </p>
           </div>
           <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-            <div className="flex items-center gap-4 text-muted-foreground text-sm">
-              {property.beds > 0 && (
+            <div>
+              <div className="flex items-center gap-4 text-muted-foreground text-sm">
+                {property.beds > 0 && (
+                  <span className="flex items-center gap-1">
+                    <BedDouble className="w-4 h-4" /> {property.beds}
+                  </span>
+                )}
+                {property.baths > 0 && (
+                  <span className="flex items-center gap-1">
+                    <Bath className="w-4 h-4" /> {property.baths}
+                  </span>
+                )}
                 <span className="flex items-center gap-1">
-                  <BedDouble className="w-4 h-4" /> {property.beds}
+                  <Maximize className="w-4 h-4" />{" "}
+                  {property.sqft.toLocaleString()} sqft
                 </span>
+              </div>
+              {reviewCount > 0 && (
+                <div className="mt-2 flex items-center gap-1.5 text-amber-500 text-sm">
+                  <Star className="w-4 h-4 fill-current" />
+                  <span className="font-medium text-slate-700 dark:text-slate-300">
+                    {averageRating.toFixed(1)}
+                  </span>
+                  <span className="text-muted-foreground">({reviewCount})</span>
+                </div>
               )}
-              {property.baths > 0 && (
-                <span className="flex items-center gap-1">
-                  <Bath className="w-4 h-4" /> {property.baths}
-                </span>
-              )}
-              <span className="flex items-center gap-1">
-                <Maximize className="w-4 h-4" />{" "}
-                {property.sqft.toLocaleString()} sqft
-              </span>
             </div>
             <p className="font-display font-bold text-lg text-primary">
               {formatPrice(property.price, property.status)}
@@ -91,7 +104,7 @@ const PropertyCard = ({ property, layout = "grid" }: PropertyCardProps) => {
       href={`/properties/${property.id}`}
       className="group bg-card rounded-xl border border-border overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col"
     >
-      <div className="relative overflow-hidden aspect-[4/3] w-full bg-muted">
+      <div className="relative overflow-hidden aspect-4/3 w-full bg-muted">
         <img
           src={property.image}
           alt={property.title}
@@ -142,6 +155,17 @@ const PropertyCard = ({ property, layout = "grid" }: PropertyCardProps) => {
             {property.sqft.toLocaleString()}
           </span>
         </div>
+        {reviewCount > 0 && (
+          <div className="mb-3 flex items-center gap-1.5 text-amber-500 text-sm">
+            <Star className="w-4 h-4 fill-current" />
+            <span className="font-medium text-slate-700 dark:text-slate-300">
+              {averageRating.toFixed(1)}
+            </span>
+            <span className="text-muted-foreground text-xs">
+              ({reviewCount} reviews)
+            </span>
+          </div>
+        )}
         <div className="pt-3 border-t border-border mt-auto">
           <p className="font-display font-bold text-lg text-primary">
             {formatPrice(property.price, property.status)}

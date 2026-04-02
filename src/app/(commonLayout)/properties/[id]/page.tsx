@@ -71,6 +71,11 @@ interface PropertyData {
     rating: number;
     comment?: string;
     createdAt?: string;
+    agent?: {
+      id: string;
+      name: string;
+      image?: string;
+    };
   }>;
 }
 
@@ -336,38 +341,26 @@ export default function PropertyDetailPage() {
               </p>
             </Card>
 
-            {/* Reviews Section with Form */}
-            {isLoggedIn ? (
-              <ReviewForm
-                propertyId={property.id}
-                existingReviews={
-                  property.reviews
-                    ? property.reviews.map((r) => ({
-                        id: r.id,
-                        rating: r.rating,
-                        comment: r.comment,
-                        createdAt: r.createdAt || new Date().toISOString(),
-                      }))
-                    : []
-                }
-                onReviewSubmitted={() => {
-                  // Refresh the page to get updated reviews
-                  window.location.reload();
-                }}
-              />
-            ) : (
-              <Card className="p-6 border-slate-200 dark:border-slate-700">
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-3">
-                  Reviews
-                </h2>
-                <p className="text-slate-600 dark:text-slate-400 mb-4">
-                  Please log in to submit a review for this property.
-                </p>
-                <Button asChild className="bg-blue-600 hover:bg-blue-700">
-                  <Link href="/login">Go to Login</Link>
-                </Button>
-              </Card>
-            )}
+            {/* Reviews Section */}
+            <ReviewForm
+              propertyId={property.id}
+              isLoggedIn={isLoggedIn}
+              existingReviews={
+                property.reviews
+                  ? property.reviews.map((r) => ({
+                      id: r.id,
+                      rating: r.rating,
+                      comment: r.comment,
+                      createdAt: r.createdAt || new Date().toISOString(),
+                      reviewerName: r.agent?.name,
+                    }))
+                  : []
+              }
+              onReviewSubmitted={() => {
+                // Refresh the page to get updated reviews
+                window.location.reload();
+              }}
+            />
           </div>
 
           {/* Sidebar - Agent Info & Contact */}

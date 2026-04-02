@@ -50,6 +50,12 @@ interface PropertyResponse {
     id: string;
     rating: number;
     comment: string;
+    createdAt?: string;
+    agent?: {
+      id: string;
+      name: string;
+      image?: string;
+    };
   }>;
 }
 

@@ -28,31 +28,45 @@ const FeaturedListings = () => {
           };
 
           const convertedProperties: Property[] = result.data.map(
-            (prop: any) => ({
-              id: prop.id,
-              title: prop.title,
-              location: prop.location,
-              price: prop.price,
-              type: typeMap[prop.type] || prop.type,
-              status: prop.listingType === "RENT" ? "For Rent" : "For Sale",
-              beds: prop.bedrooms,
-              baths: prop.bathrooms,
-              sqft: prop.area,
-              image: prop.thumbnail,
-              images: prop.propertyImages?.map((img: any) => img.url) || [
-                prop.thumbnail,
-              ],
-              description: prop.description,
-              features: [],
-              agent: {
-                name: prop.agent?.name || "Agent",
-                phone: "",
-                image: prop.agent?.image || "",
-              },
-              featured: prop.isFeatured,
-              yearBuilt: new Date(prop.createdAt).getFullYear(),
-              garage: 0,
-            }),
+            (prop: any) => {
+              const reviewCount = prop.reviews?.length || 0;
+              const averageRating =
+                reviewCount > 0
+                  ? prop.reviews.reduce(
+                      (sum: number, review: { rating: number }) =>
+                        sum + review.rating,
+                      0,
+                    ) / reviewCount
+                  : 0;
+
+              return {
+                id: prop.id,
+                title: prop.title,
+                location: prop.location,
+                price: prop.price,
+                type: typeMap[prop.type] || prop.type,
+                status: prop.listingType === "RENT" ? "For Rent" : "For Sale",
+                beds: prop.bedrooms,
+                baths: prop.bathrooms,
+                sqft: prop.area,
+                image: prop.thumbnail,
+                images: prop.propertyImages?.map((img: any) => img.url) || [
+                  prop.thumbnail,
+                ],
+                description: prop.description,
+                features: [],
+                agent: {
+                  name: prop.agent?.name || "Agent",
+                  phone: "",
+                  image: prop.agent?.image || "",
+                },
+                featured: prop.isFeatured,
+                yearBuilt: new Date(prop.createdAt).getFullYear(),
+                garage: 0,
+                reviewCount,
+                averageRating,
+              };
+            },
           );
 
           setFeatured(convertedProperties);
