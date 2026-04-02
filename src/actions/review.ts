@@ -240,3 +240,44 @@ export const submitReview = async (
     };
   }
 };
+
+export const deleteReview = async (reviewId: string) => {
+  try {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+    if (!BACKEND_URL) {
+      throw new Error("API URL not configured");
+    }
+
+    const cookieStore = await cookies();
+    const response = await fetch(`${BACKEND_URL}/api/v1/reviews/${reviewId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieStore.toString(),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        await parseApiErrorMessage(
+          response,
+          "Could not delete this review right now.",
+        ),
+      );
+    }
+
+    return {
+      success: true,
+      message: "Review deleted successfully",
+    };
+  } catch (error) {
+    console.error("Error deleting review:", error);
+    return {
+      success: false,
+      message: getErrorMessage(
+        error,
+        "Could not delete this review right now.",
+      ),
+    };
+  }
+};

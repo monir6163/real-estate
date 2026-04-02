@@ -1,7 +1,8 @@
 "use client";
 
-import { getAllReviews } from "@/actions/review";
+import { deleteReview, getAllReviews } from "@/actions/review";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getErrorMessage } from "@/lib/error-message";
@@ -11,9 +12,11 @@ import {
   Loader2,
   MessageSquare,
   Star,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 interface ReviewItem {
   id: string;
@@ -67,6 +70,35 @@ export default function AllReviewsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [ratingFilter, setRatingFilter] = useState<string>("ALL");
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
+
+  const handleDeleteReview = async (reviewId: string) => {
+    const shouldDelete = window.confirm(
+      "Are you sure you want to delete this review?",
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      setDeletingReviewId(reviewId);
+      const result = await deleteReview(reviewId);
+
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+
+      setReviews((prev) => prev.filter((review) => review.id !== reviewId));
+      toast.success("Review deleted successfully");
+    } catch (err) {
+      toast.error(
+        getErrorMessage(err, "Could not delete this review right now."),
+      );
+    } finally {
+      setDeletingReviewId(null);
+    }
+  };
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -252,6 +284,24 @@ export default function AllReviewsPage() {
                         day: "numeric",
                       })}
                     </span>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteReview(review.id)}
+                      disabled={deletingReviewId === review.id}
+                      className="gap-2"
+                    >
+                      {deletingReviewId === review.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                      Delete Review
+                    </Button>
                   </div>
 
                   {review.comment ? (
