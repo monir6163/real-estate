@@ -238,7 +238,7 @@ export default function AllPropertiesPage() {
                       className="flex-1"
                       size="sm"
                     >
-                      <Link href={`/property/${property.id}`}>
+                      <Link href={`/properties/${property.id}`}>
                         View Details
                       </Link>
                     </Button>

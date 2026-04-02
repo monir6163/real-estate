@@ -60,6 +60,11 @@ export default function CreatePropertyForm() {
         if (!value.thumbnail) {
           throw new Error("Thumbnail image is required");
         }
+        if (!value.propertyImages || value.propertyImages.length === 0) {
+          throw new Error("At least one property image is required");
+        }
+
+        // Validate total upload size (thumbnail + all images)
 
         const imageFiles: File[] = value.propertyImages || [];
         const totalUploadBytes =
