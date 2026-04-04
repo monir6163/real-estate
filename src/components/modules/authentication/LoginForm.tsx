@@ -1,4 +1,5 @@
 "use client";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -33,6 +34,7 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div">) {
   const [showPassword, setShowPassword] = React.useState(false);
+  const lastMethod = authClient.getLastUsedLoginMethod();
   const router = useRouter();
 
   const form = useForm({
@@ -44,7 +46,7 @@ export function LoginForm({
     onSubmit: async ({ value }) => {
       const toastId = toast.loading("Logging in...");
       try {
-        const { error, data } = await authClient.signIn.email(value);
+        const { error } = await authClient.signIn.email(value);
         if (error) {
           toast.error(error.message, { id: toastId });
           return;
@@ -53,7 +55,7 @@ export function LoginForm({
           id: toastId,
         });
         router.push("/");
-      } catch (error) {
+      } catch {
         toast.error("An unexpected error occurred. Please try again.", {
           id: toastId,
         });
@@ -62,7 +64,7 @@ export function LoginForm({
   });
 
   const handleGoogleLogin = async () => {
-    const data = await authClient.signIn.social({
+    await authClient.signIn.social({
       provider: "google",
       callbackURL: process.env.NEXT_PUBLIC_FRONTEND_URL!,
     });
@@ -145,18 +147,28 @@ export function LoginForm({
               />
 
               <Button type="submit" className="w-full">
-                Log In
+                <span className="inline-flex items-center gap-2">
+                  Log In
+                  {lastMethod === "email" && (
+                    <Badge variant="secondary">Last used</Badge>
+                  )}
+                </span>
               </Button>
 
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card"></FieldSeparator>
               <Button
                 type="button"
-                variant="outline"
+                variant={lastMethod === "google" ? "default" : "outline"}
                 className="w-full"
                 onClick={handleGoogleLogin}
               >
-                <FaGoogle className="mr-2" />
-                Continue with Google
+                <span className="inline-flex items-center gap-2">
+                  <FaGoogle />
+                  Continue with Google
+                  {lastMethod === "google" && (
+                    <Badge variant="secondary">Last used</Badge>
+                  )}
+                </span>
               </Button>
               <FieldDescription className="text-center">
                 Don't have an account?{" "}
