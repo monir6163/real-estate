@@ -56,6 +56,7 @@ export function VerifyEmailContent() {
     }
 
     try {
+      setError(null);
       setIsLoading(true);
       setStatus("loading");
 
@@ -82,7 +83,8 @@ export function VerifyEmailContent() {
         router.push("/login");
       }, 3000);
     } catch (err) {
-      setStatus("error");
+      // Keep user on OTP input so they can retry after an invalid code.
+      setStatus("input");
       const errorMessage =
         err instanceof Error ? err.message : "Failed to verify email";
       setError(errorMessage);
@@ -165,14 +167,22 @@ export function VerifyEmailContent() {
                     type="text"
                     placeholder="000000"
                     value={otp}
-                    onChange={(e) =>
-                      setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
-                    }
+                    onChange={(e) => {
+                      setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
+                      if (error) setError(null);
+                    }}
                     maxLength={6}
                     className="text-center text-2xl tracking-widest font-bold text-foreground"
                     disabled={isLoading}
                     autoFocus
                   />
+                  {error && (
+                    <div className="w-full bg-destructive/5 border border-destructive/20 rounded-md p-3">
+                      <p className="text-xs text-destructive text-center">
+                        {error}
+                      </p>
+                    </div>
+                  )}
                   <p className="text-xs text-muted-foreground text-center">
                     Enter the 6-digit code sent to your email
                   </p>
