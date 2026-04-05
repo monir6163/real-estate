@@ -194,3 +194,175 @@ export const getCookie = async () => {
   const cookieStore = await cookies();
   return cookieStore.toString();
 };
+
+export const forgotPassword = async (email: string) => {
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/v1/auth/forgot-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return {
+        data: null,
+        message: await parseApiErrorMessage(
+          response,
+          "Could not send reset OTP. Please try again.",
+        ),
+        status: false,
+      };
+    }
+
+    const result = await response.json();
+    return {
+      data: result.data || null,
+      message: result.message || "Reset OTP sent successfully",
+      status: true,
+    };
+  } catch (error) {
+    return {
+      data: null,
+      message: getErrorMessage(
+        error,
+        "Could not send reset OTP. Please try again.",
+      ),
+      status: false,
+    };
+  }
+};
+
+export const resetPassword = async (payload: {
+  email: string;
+  otp: string;
+  newPassword: string;
+}) => {
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/v1/auth/reset-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return {
+        data: null,
+        message: await parseApiErrorMessage(
+          response,
+          "Could not reset your password. Please try again.",
+        ),
+        status: false,
+      };
+    }
+
+    const result = await response.json();
+    return {
+      data: result.data || null,
+      message: result.message || "Password reset successfully",
+      status: true,
+    };
+  } catch (error) {
+    return {
+      data: null,
+      message: getErrorMessage(
+        error,
+        "Could not reset your password. Please try again.",
+      ),
+      status: false,
+    };
+  }
+};
+
+export const resendVerificationEmail = async (email: string) => {
+  try {
+    const response = await fetch(
+      `${BACKEND_URL}/api/v1/auth/resend-verification-email`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      return {
+        data: null,
+        message: await parseApiErrorMessage(
+          response,
+          "Could not resend verification email. Please try again.",
+        ),
+        status: false,
+      };
+    }
+
+    const result = await response.json();
+    return {
+      data: result.data || null,
+      message: result.message || "Verification email resent successfully",
+      status: true,
+    };
+  } catch (error) {
+    return {
+      data: null,
+      message: getErrorMessage(
+        error,
+        "Could not resend verification email. Please try again.",
+      ),
+      status: false,
+    };
+  }
+};
+
+export const changePassword = async (payload: {
+  currentPassword: string;
+  newPassword: string;
+}) => {
+  try {
+    const cookieStore = await cookies();
+    const response = await fetch(`${BACKEND_URL}/api/v1/auth/change-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieStore.toString(),
+      },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return {
+        data: null,
+        message: await parseApiErrorMessage(
+          response,
+          "Could not change your password. Please try again.",
+        ),
+        status: false,
+      };
+    }
+
+    const result = await response.json();
+    return {
+      data: result.data || null,
+      message: result.message || "Password changed successfully",
+      status: true,
+    };
+  } catch (error) {
+    return {
+      data: null,
+      message: getErrorMessage(
+        error,
+        "Could not change your password. Please try again.",
+      ),
+      status: false,
+    };
+  }
+};

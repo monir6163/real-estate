@@ -1,4 +1,5 @@
 import { getCurrentUser } from "@/actions/users";
+import { ChangePasswordForm } from "@/components/modules/authentication/ChangePasswordForm";
 import { User } from "@/types";
 import ProfileCard from "./ProfileCard";
 import ProfileForm from "./ProfileForm";
@@ -23,6 +24,7 @@ export default async function ProfilePage() {
         {/* Profile Form - Takes 2 columns on large screens */}
         <div className="lg:col-span-2">
           <ProfileForm user={user as User} />
+          <ChangePasswordForm />
         </div>
       </div>
     </div>

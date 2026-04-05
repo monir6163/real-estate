@@ -155,6 +155,15 @@ export function LoginForm({
                 </span>
               </Button>
 
+              <FieldDescription className="text-right">
+                <Link
+                  href="/forgot-password"
+                  className="text-primary hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </FieldDescription>
+
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card"></FieldSeparator>
               <Button
                 type="button"

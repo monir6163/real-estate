@@ -53,6 +53,7 @@ export const config = {
     "/login",
     "/register",
     "/forgot-password",
+    "/reset-password",
     "/become-agent",
     "/orders/:path*",
   ],

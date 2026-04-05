@@ -1,5 +1,6 @@
 "use client";
 
+import { resendVerificationEmail } from "@/actions/users";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -99,24 +100,13 @@ export function VerifyEmailContent() {
 
     try {
       setIsLoading(true);
-      const response = await fetch(
-        `${API_URL}/api/v1/auth/resend-verification-email`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({ email }),
-        },
-      );
+      const response = await resendVerificationEmail(email);
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Failed to resend OTP");
+      if (!response.status) {
+        throw new Error(response.message || "Failed to resend OTP");
       }
 
-      toast.success("OTP sent to your email");
+      toast.success(response.message || "OTP sent to your email");
       setResendTimer(60);
       setOtp("");
     } catch (err) {
