@@ -1,3 +1,4 @@
+import FAQs from "@/components/modules/Home/FAQs";
 import FeaturedListings from "@/components/modules/Home/FeaturedListings";
 import HeroSection from "@/components/modules/Home/Hero";
 import HowItWorks from "@/components/modules/Home/HowItWorks";
@@ -16,6 +17,7 @@ export default async function Home() {
       <HowItWorks />
       <WhyChooseUs />
       <Testimonials />
+      <FAQs />
     </>
   );
 }

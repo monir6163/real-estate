@@ -21,7 +21,8 @@ import { ProfileDropdown } from "./ProfileDropdown";
 const navItems = [
   { name: "Home", href: "/" },
   { name: "Properties", href: "/properties" },
-  { name: "Become an Agent", href: "/become-agent" },
+  { name: "About Us", href: "/about" },
+  { name: "Contact Us", href: "/contact" },
 ];
 
 export default function Navbar() {

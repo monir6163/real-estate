@@ -5,7 +5,7 @@ import Link from "next/link";
 
 const HeroSection = () => {
   return (
-    <section className="relative min-h-150 lg:min-h-175 flex items-center overflow-hidden">
+    <section className="relative min-h-150 lg:min-h-140 flex items-center overflow-hidden">
       <img
         src={"/hero-city.jpg"}
         alt="Modern city skyline"
