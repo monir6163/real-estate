@@ -14,7 +14,7 @@ A modern full-stack real estate platform built with Next.js, TypeScript, Tailwin
 
 - **user**
   - Email:monirdev1@gmail.com
-  - Password:12345678
+  - Password:123456789
 
 # Live Demo
 
