@@ -69,8 +69,58 @@ export function LoginForm({
       callbackURL: process.env.NEXT_PUBLIC_FRONTEND_URL!,
     });
   };
+
+  const demoCredentials = [
+    {
+      role: "Admin",
+      email: "monirhossain6163@gmail.com",
+      password: "123456789",
+      color: "bg-red-500 hover:bg-red-600",
+    },
+    {
+      role: "Agent",
+      email: "ultrasrealpro@gmail.com",
+      password: "12345678",
+      color: "bg-blue-500 hover:bg-blue-600",
+    },
+    {
+      role: "User",
+      email: "monirdev1@gmail.com",
+      password: "12345678",
+      color: "bg-green-500 hover:bg-green-600",
+    },
+  ];
+
+  const handleDemoLogin = (email: string, password: string) => {
+    form.setFieldValue("email", email);
+    form.setFieldValue("password", password);
+  };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      {/* Demo Login Section */}
+      <div className="rounded-xl border border-border bg-card p-6">
+        <p className="text-sm font-semibold text-foreground mb-4">
+          Demo Credentials
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {demoCredentials.map((demo) => (
+            <button
+              key={demo.role}
+              onClick={() => handleDemoLogin(demo.email, demo.password)}
+              className={cn(
+                "px-4 py-3 rounded-lg text-white font-medium transition-all text-sm",
+                demo.color,
+              )}
+            >
+              <div className="font-semibold">{demo.role}</div>
+              <div className="text-xs opacity-90 mt-1">{demo.email}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Login Card */}
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
           <form

@@ -5,7 +5,7 @@ A modern full-stack real estate platform built with Next.js, TypeScript, Tailwin
 # Credentials for Testing
 
 - **Admin**
-  - Email:monirhossain@gmail.com
+  - Email:monirhossain6163@gmail.com
   - Password:123456789
 
 - **Agent**
