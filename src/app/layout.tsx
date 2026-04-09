@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import ChatWindow from "@/components/ChatWindow";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
@@ -32,6 +33,7 @@ export default function RootLayout({
         >
           <NextTopLoader color="red" height={2} />
           {children}
+          <ChatWindow />
           <Toaster position="top-right" richColors />
         </ThemeProvider>
       </body>
