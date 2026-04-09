@@ -29,6 +29,82 @@ export const ChatWindow = () => {
     scrollToBottom();
   }, [messages, typingIndicator]);
 
+  const handleSuggestedMessage = async (messageText: string) => {
+    setLoading(true);
+    setTypingIndicator(true);
+
+    try {
+      const allMessages = [
+        ...messages
+          .filter((m) => m.role !== "assistant" || m.content.length > 0)
+          .map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+        { role: "user" as const, content: messageText },
+      ];
+
+      const response = await streamChat({ messages: allMessages });
+
+      if (!response) {
+        throw new Error("No response from server");
+      }
+
+      const assistantMessage: MessageType = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: "",
+        timestamp: Date.now(),
+      };
+
+      const reader = response.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = "";
+      let firstChunk = true;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const text = decoder.decode(value);
+        const lines = text.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const jsonStr = line.slice(6);
+              const data = JSON.parse(jsonStr);
+
+              if (data.type === "complete") {
+                assistantMessage.content = fullContent;
+                addMessage(assistantMessage);
+                setTypingIndicator(false);
+                break;
+              }
+
+              if (data.content) {
+                fullContent += data.content;
+                if (firstChunk) {
+                  assistantMessage.content = fullContent;
+                  addMessage(assistantMessage);
+                  firstChunk = false;
+                }
+              }
+            } catch (e) {
+              // Ignore parse errors in streaming
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Chat error:", error);
+      toast.error("Failed to get response. Please try again.");
+      setTypingIndicator(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim() || isLoading) return;
@@ -161,13 +237,126 @@ export const ChatWindow = () => {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-slate-900">
         {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-center">
-            <div>
+          <div className="flex flex-col items-center justify-center h-full space-y-4">
+            <div className="text-center">
               <div className="text-4xl mb-2">👋</div>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-4">
                 Hi! I'm your AI assistant. Ask me anything about properties,
-                bookings, payments, or how to use our platform.
+                bookings, or payments.
               </p>
+            </div>
+
+            {/* Suggestion Prompts */}
+            <div className="grid grid-cols-1 gap-2 w-full">
+              <button
+                onClick={() => {
+                  const message = "আমার প্রপার্টিজ কী?";
+                  const userMessage: MessageType = {
+                    id: Date.now().toString(),
+                    role: "user",
+                    content: message,
+                    timestamp: Date.now(),
+                  };
+                  addMessage(userMessage);
+                  handleSuggestedMessage(message);
+                }}
+                className="p-3 bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-100 dark:hover:bg-slate-700 transition-colors text-left"
+              >
+                <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+                  🏠 আমার প্রপার্টিজ
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  আমার লিস্ট করা প্রপার্টিজ দেখুন
+                </p>
+              </button>
+
+              <button
+                onClick={() => {
+                  const message = "আমার বুকিংস কী?";
+                  const userMessage: MessageType = {
+                    id: Date.now().toString(),
+                    role: "user",
+                    content: message,
+                    timestamp: Date.now(),
+                  };
+                  addMessage(userMessage);
+                  handleSuggestedMessage(message);
+                }}
+                className="p-3 bg-green-50 dark:bg-slate-800 border border-green-200 dark:border-green-700 rounded-lg hover:bg-green-100 dark:hover:bg-slate-700 transition-colors text-left"
+              >
+                <p className="text-xs font-semibold text-green-600 dark:text-green-400">
+                  📅 আমার বুকিংস
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  বুকিং স্ট্যাটাস এবং বিবরণ
+                </p>
+              </button>
+
+              <button
+                onClick={() => {
+                  const message = "নতুন প্রপার্টি কীভাবে লিস্ট করব?";
+                  const userMessage: MessageType = {
+                    id: Date.now().toString(),
+                    role: "user",
+                    content: message,
+                    timestamp: Date.now(),
+                  };
+                  addMessage(userMessage);
+                  handleSuggestedMessage(message);
+                }}
+                className="p-3 bg-purple-50 dark:bg-slate-800 border border-purple-200 dark:border-purple-700 rounded-lg hover:bg-purple-100 dark:hover:bg-slate-700 transition-colors text-left"
+              >
+                <p className="text-xs font-semibold text-purple-600 dark:text-purple-400">
+                  ➕ নতুন প্রপার্টি
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  প্রপার্টি লিস্ট করার ধাপ
+                </p>
+              </button>
+
+              <button
+                onClick={() => {
+                  const message = "পেমেন্ট অপশন কী আছে?";
+                  const userMessage: MessageType = {
+                    id: Date.now().toString(),
+                    role: "user",
+                    content: message,
+                    timestamp: Date.now(),
+                  };
+                  addMessage(userMessage);
+                  handleSuggestedMessage(message);
+                }}
+                className="p-3 bg-orange-50 dark:bg-slate-800 border border-orange-200 dark:border-orange-700 rounded-lg hover:bg-orange-100 dark:hover:bg-slate-700 transition-colors text-left"
+              >
+                <p className="text-xs font-semibold text-orange-600 dark:text-orange-400">
+                  💳 পেমেন্ট অপশন
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  পেমেন্ট পদ্ধতি এবং তথ্য
+                </p>
+              </button>
+
+              <button
+                onClick={() => {
+                  const message = "বুকিং ক্যান্সেল করব কীভাবে?";
+                  const userMessage: MessageType = {
+                    id: Date.now().toString(),
+                    role: "user",
+                    content: message,
+                    timestamp: Date.now(),
+                  };
+                  addMessage(userMessage);
+                  handleSuggestedMessage(message);
+                }}
+                className="p-3 bg-red-50 dark:bg-slate-800 border border-red-200 dark:border-red-700 rounded-lg hover:bg-red-100 dark:hover:bg-slate-700 transition-colors text-left"
+              >
+                <p className="text-xs font-semibold text-red-600 dark:text-red-400">
+                  ❌ বুকিং ক্যান্সেল
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  ক্যান্সেল প্রক্রিয়া এবং রিফান্ড
+                </p>
+              </button>
             </div>
           </div>
         ) : (
